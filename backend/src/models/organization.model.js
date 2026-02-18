@@ -9,22 +9,16 @@ const organizationSchema = new mongoose.Schema(
     },
 
     domain: {
-      type: String,
-      unique: true,
-    },
-
-    plan: {
-      type: String,
-      enum: ["free", "pro", "enterprise"],
-      default: "free",
-    },
-
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+  type: String,
+  unique: true,
+  sparse: true,   // ⭐ VERY IMPORTANT
+  lowercase: true,
+  trim: true,
+},
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Organization", organizationSchema);
+const Organization = mongoose.model("Organization", organizationSchema);
+
+module.exports = Organization;

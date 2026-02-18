@@ -5,38 +5,63 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/auth.routes");
+const inviteRoutes = require("./routes/invite.routes");
+
 const { errorMiddleware } = require("./middlewares/error.middleware");
 
 const app = express();
 
-app.use(helmet()); // security headers
+/*
+========================
+GLOBAL MIDDLEWARE
+========================
+*/
 
-app.use(express.json({ limit: "1mb" })); // parse JSON body
-app.use(cookieParser()); // read cookies
-
-
-app.use(    //it basically allows the frontend to talk to my backendd
-  cors({      // cors - cross origin resourse sharing
-    origin: process.env.CORS_ORIGIN?.split(",") || ["http://localhost:5173"],     //Allows your frontend (on port 5173) to talk to your backend (on port 4000)
-    credentials: true,   // it basically allows cookies to be sent
-  })
-);
+app.use(helmet());
 
 app.use(
-  rateLimit({      //Prevents spam/abuse by limiting requests
-    windowMs: 60 * 1000,
-    max: 120,         // max limit i have given is 120 req/min
+  cors({
+    origin: process.env.CORS_ORIGIN?.split(",") || ["http://localhost:5173"],
+    credentials: true,
   })
 );
 
-app.get("/health", (req, res) => res.json({ ok: true }));   //Simple endpoint to check if server is running
+// parse body BEFORE routes
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+app.use(cookieParser());
+
+app.use(
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 120,
+  })
+);
+
+/*
+========================
+HEALTH CHECK
+========================
+*/
+
+app.get("/health", (req, res) => res.json({ ok: true }));
+
+/*
+========================
+ROUTES
+========================
+*/
 
 app.use("/v1/auth", authRoutes);
+app.use("/v1/invite", inviteRoutes);
+
+/*
+========================
+ERROR HANDLER (LAST)
+========================
+*/
 
 app.use(errorMiddleware);
 
-module.exports = { app };   //it makes the app available to use in your main server file
-
-
-// so Request → Helmet → JSON Parser → Cookie Parser → CORS → Rate Limit → Routes → Error Handler → Response
-//This setup ensures every request is secure, parsed, and properly handled!
+module.exports = { app };
