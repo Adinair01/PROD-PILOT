@@ -1,61 +1,49 @@
+const Organization = require("../models/organization.model");
 const { User } = require("../models/user");
-const { hashPassword, verifyPassword } = require("../utils/hash");
-const {
-  signAccessToken,
-  signRefreshToken,
-  verifyRefreshToken,
-} = require("../utils/jwt");
+const hashPassword = require("../utils/hash");
+const generateToken = require("../utils/jwt");
 
-async function register({ orgId, name, email, password, role }) {
+const registerAdmin = async ({ name, email, password, orgName }) => {
+
+  const existingOrg = await Organization.findOne({ name: orgName });
+
+  if (existingOrg) {
+    const error = new Error("Organization already exists");
+error.statusCode = 409;
+throw error;
+  }
+
+  // create org
+  const organization = await Organization.create({
+    name: orgName,
+  });
+
+  // hash password
   const passwordHash = await hashPassword(password);
 
-  const user = await User.create({
-    orgId,
+  // create admin
+  const adminUser = await User.create({
     name,
     email,
     passwordHash,
-    role,
+    role: "ADMIN",
+    organizationId: organization._id,
+  });
+
+  // jwt
+  const token = generateToken({
+    userId: adminUser._id,
+    orgId: organization._id,
+    role: adminUser.role,
   });
 
   return {
-    id: user._id.toString(),
-    orgId: user.orgId,
-    role: user.role,
-    email: user.email,
-    name: user.name,
+    token,
+    user: adminUser,
+    organization,
   };
-}
+};
 
-async function login({ orgId, email, password }) {
-  const user = await User.findOne({ orgId, email });
-  if (!user) throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 });
-
-  const ok = await verifyPassword(password, user.passwordHash);
-  if (!ok) throw Object.assign(new Error("Invalid credentials"), { statusCode: 401 });
-
-  const payload = { sub: user._id.toString(), orgId: user.orgId, role: user.role };
-
-  return {
-    user: {
-      id: user._id.toString(),
-      orgId: user.orgId,
-      role: user.role,
-      email: user.email,
-      name: user.name,
-    },
-    accessToken: signAccessToken(payload),
-    refreshToken: signRefreshToken(payload),
-  };
-}
-
-async function refresh(refreshToken) {
-  const decoded = verifyRefreshToken(refreshToken);
-  const payload = { sub: decoded.sub, orgId: decoded.orgId, role: decoded.role };
-
-  return {
-    accessToken: signAccessToken(payload),
-    refreshToken: signRefreshToken(payload),
-  };
-}
-
-module.exports = { register, login, refresh };
+module.exports = {
+  registerAdmin,
+};
