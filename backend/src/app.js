@@ -6,15 +6,16 @@ const rateLimit = require("express-rate-limit");
 
 const authRoutes = require("./routes/auth.routes");
 const inviteRoutes = require("./routes/invite.routes");
+const feedbackRoutes = require("./routes/feedback.routes");
+const analyticsRoutes = require("./routes/analytics.routes");
+const insightsRoutes = require("./routes/insights.routes");
 
 const { errorMiddleware } = require("./middlewares/error.middleware");
 
 const app = express();
 
 /*
-========================
 GLOBAL MIDDLEWARE
-========================
 */
 
 app.use(helmet());
@@ -55,6 +56,9 @@ ROUTES
 
 app.use("/v1/auth", authRoutes);
 app.use("/v1/invite", inviteRoutes);
+app.use("/v1/feedback", feedbackRoutes);
+app.use("/v1/analytics", analyticsRoutes);
+app.use("/v1/insights", insightsRoutes);
 
 /*
 ========================
