@@ -2,15 +2,21 @@ const { verifyAccessToken } = require("../utils/jwt");
 
 function requireAuth(req, res, next) {
   try {
-    const header = req.headers.authorization;
+    // Try to get token from cookies first, then from Authorization header
+    let token = req.cookies.accessToken;
 
-    if (!header?.startsWith("Bearer ")) {
+    if (!token) {
+      const header = req.headers.authorization;
+      if (header?.startsWith("Bearer ")) {
+        token = header.split(" ")[1];
+      }
+    }
+
+    if (!token) {
       return res.status(401).json({
         error: "Authorization token missing",
       });
     }
-
-    const token = header.split(" ")[1];
 
     const decoded = verifyAccessToken(token);
 

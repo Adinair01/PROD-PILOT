@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Wrapper ── */
+.il-wrap {
+  min-height: 100vh;
+  background: #060D1A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Ambient background glows ── */
+.il-glow-tl {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%);
+  top: -160px;
+  left: -160px;
+  pointer-events: none;
+  animation: il-breathe 5s ease-in-out infinite;
+}
+
+.il-glow-br {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 65%);
+  bottom: -120px;
+  right: -120px;
+  pointer-events: none;
+  animation: il-breathe 5s ease-in-out infinite 2.5s;
+}
+
+@keyframes il-breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.7; }
+  50%       { transform: scale(1.15); opacity: 1;   }
+}
+
+/* ── HUD ring container ── */
+.il-hud {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin-bottom: 2.75rem;
+}
+
+/* ── Rings ── */
+.il-ring {
+  position: absolute;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+}
+
+.il-ring-outer {
+  width: 280px;
+  height: 280px;
+  margin-top: -140px;
+  margin-left: -140px;
+  border: 1px solid rgba(99,102,241,0.2);
+  animation: il-spin-cw 14s linear infinite;
+}
+
+.il-ring-mid {
+  width: 220px;
+  height: 220px;
+  margin-top: -110px;
+  margin-left: -110px;
+  border: 1.5px solid rgba(139,92,246,0.3);
+  animation: il-spin-ccw 9s linear infinite;
+}
+
+.il-ring-inner {
+  width: 160px;
+  height: 160px;
+  margin-top: -80px;
+  margin-left: -80px;
+  border: 1px solid rgba(99,102,241,0.15);
+  animation: il-spin-cw 6s linear infinite;
+}
+
+/* Scanning arc — the bright sweeping segment */
+.il-ring-scan {
+  width: 220px;
+  height: 220px;
+  margin-top: -110px;
+  margin-left: -110px;
+  border: 2px solid transparent;
+  border-top-color: rgba(129,140,248,0.95);
+  border-right-color: rgba(129,140,248,0.35);
+  box-shadow: 0 0 20px rgba(129,140,248,0.25);
+  animation: il-spin-cw 2.2s linear infinite;
+}
+
+@keyframes il-spin-cw  { to { transform: rotate(360deg);  } }
+@keyframes il-spin-ccw { to { transform: rotate(-360deg); } }
+
+/* ── Tick marks on outer ring ── */
+.il-tick {
+  position: absolute;
+  width: 7px;
+  height: 1.5px;
+  background: rgba(99,102,241,0.45);
+  top: 50%;
+  left: 50%;
+  transform-origin: left center;
+}
+
+/* ── Colored data nodes ── */
+.il-node {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  animation: il-node-pulse 2.2s ease-in-out infinite;
+}
+
+.il-node-0 { background: #6366F1; box-shadow: 0 0 10px #6366F1; animation-delay: 0s;    }
+.il-node-1 { background: #8B5CF6; box-shadow: 0 0 10px #8B5CF6; animation-delay: 0.55s; }
+.il-node-2 { background: #EC4899; box-shadow: 0 0 10px #EC4899; animation-delay: 1.1s;  }
+.il-node-3 { background: #22C55E; box-shadow: 0 0 10px #22C55E; animation-delay: 1.65s; }
+
+@keyframes il-node-pulse {
+  0%, 100% { opacity: 0.45; transform: var(--node-transform) scale(1);   }
+  50%       { opacity: 1;    transform: var(--node-transform) scale(1.8); }
+}
+
+/* ── Center core ── */
+.il-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  margin-top: -40px;
+  margin-left: -40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.il-core-glow {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%);
+  animation: il-core-breathe 2s ease-in-out infinite;
+}
+
+.il-core-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(99,102,241,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.il-core-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #818CF8, #A78BFA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes il-core-breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.5; }
+  50%       { transform: scale(1.25); opacity: 1;   }
+}
+
+/* ── Corner crosshairs ── */
+.il-cross {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+.il-cross-tl { top: 6px;  left: 6px;  border-top: 1.5px solid rgba(99,102,241,0.45); border-left:  1.5px solid rgba(99,102,241,0.45); }
+.il-cross-tr { top: 6px;  right: 6px; border-top: 1.5px solid rgba(99,102,241,0.45); border-right: 1.5px solid rgba(99,102,241,0.45); }
+.il-cross-bl { bottom: 6px; left: 6px;  border-bottom: 1.5px solid rgba(99,102,241,0.45); border-left:  1.5px solid rgba(99,102,241,0.45); }
+.il-cross-br { bottom: 6px; right: 6px; border-bottom: 1.5px solid rgba(99,102,241,0.45); border-right: 1.5px solid rgba(99,102,241,0.45); }
+
+/* ── Metric cards row ── */
+.il-cards {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+}
+
+.il-card {
+  padding: 0.65rem 1.1rem;
+  background: rgba(99,102,241,0.06);
+  border: 1px solid rgba(99,102,241,0.15);
+  border-radius: 10px;
+  text-align: center;
+  animation: il-card-in 0.5s ease-out both;
+}
+
+.il-card:nth-child(1) { animation-delay: 0.1s; }
+.il-card:nth-child(2) { animation-delay: 0.25s; }
+.il-card:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes il-card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.il-card-icon {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  color: #818CF8;
+}
+
+.il-card-bar {
+  width: 48px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(99,102,241,0.2);
+  margin: 0.3rem auto 0;
+  overflow: hidden;
+}
+
+.il-card-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+  animation: il-bar-fill 2s ease-in-out infinite;
+}
+
+.il-card:nth-child(1) .il-card-bar-fill { animation-delay: 0s;    width: 70%; }
+.il-card:nth-child(2) .il-card-bar-fill { animation-delay: 0.3s;  width: 50%; }
+.il-card:nth-child(3) .il-card-bar-fill { animation-delay: 0.6s;  width: 85%; }
+
+@keyframes il-bar-fill {
+  0%   { opacity: 0.4; transform: scaleX(0.6); }
+  50%  { opacity: 1;   transform: scaleX(1);   }
+  100% { opacity: 0.4; transform: scaleX(0.6); }
+}
+
+.il-card-text {
+  font-size: 0.65rem;
+  color: #64748B;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+/* ── Status text area ── */
+.il-status {
+  text-align: center;
+  max-width: 320px;
+}
+
+.il-eyebrow {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: rgba(99,102,241,0.65);
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.il-step-text {
+  font-size: 0.9rem;
+  color: #94A3B8;
+  font-weight: 500;
+  min-height: 1.4rem;
+  animation: il-text-fade 1.4s ease-in-out infinite;
+}
+
+@keyframes il-text-fade {
+  0%, 80%, 100% { opacity: 1;   }
+  90%            { opacity: 0.2; }
+}
+
+/* ── Progress pills ── */
+.il-pills {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.il-pill {
+  height: 3px;
+  border-radius: 2px;
+  transition: width 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
+}
+
+.il-pill-active {
+  width: 22px;
+  background: #6366F1;
+  box-shadow: 0 0 8px rgba(99,102,241,0.7);
+}
+
+.il-pill-inactive {
+  width: 6px;
+  background: rgba(99,102,241,0.18);
+}
