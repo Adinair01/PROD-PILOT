@@ -1,0 +1,5 @@
+/* App.css — intentionally minimal, layout is handled per-page */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

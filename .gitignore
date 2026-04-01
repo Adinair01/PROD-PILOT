@@ -1,7 +1,27 @@
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Environment and secrets (never commit real values)
 .env
+.env.*
+!.env.example
+**/.env
+!**/.env.example
+
+# Logs and OS
 *.log
 .DS_Store
+Thumbs.db
+
+# Build / coverage
 dist/
 build/
 coverage/
+
+# Local tooling (optional)
+*.local
+
+# IDE (keep local)
+.vscode/
+.idea/

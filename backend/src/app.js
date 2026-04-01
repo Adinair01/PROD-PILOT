@@ -9,6 +9,7 @@ const inviteRoutes = require("./routes/invite.routes");
 const feedbackRoutes = require("./routes/feedback.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
 const insightsRoutes = require("./routes/insights.routes");
+const pmInsightsRoutes = require("./routes/pm-insights.routes");
 
 const { errorMiddleware } = require("./middlewares/error.middleware");
 
@@ -59,6 +60,7 @@ app.use("/v1/invite", inviteRoutes);
 app.use("/v1/feedback", feedbackRoutes);
 app.use("/v1/analytics", analyticsRoutes);
 app.use("/v1/insights", insightsRoutes);
+app.use("/v1/pm-insights", pmInsightsRoutes);
 
 /*
 ========================

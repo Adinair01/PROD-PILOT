@@ -1,6 +1,8 @@
 const Feedback = require("../models/feedback.model");
 
 const getSentimentStats = async (orgId) => {
+  console.log("Getting sentiment stats for org:", orgId);
+  
   const stats = await Feedback.aggregate([
     { $match: { organizationId: orgId } },
     {
@@ -10,6 +12,8 @@ const getSentimentStats = async (orgId) => {
       },
     },
   ]);
+
+  console.log("Sentiment stats raw:", stats);
 
   const total = stats.reduce((sum, s) => sum + s.count, 0);
 
@@ -24,11 +28,15 @@ const getSentimentStats = async (orgId) => {
     result[s._id] = s.count;
   });
 
+  console.log("Sentiment stats result:", result);
+
   return result;
 };
 
 const getRoleBreakdown = async (orgId) => {
-  return Feedback.aggregate([
+  console.log("Getting role breakdown for org:", orgId);
+  
+  const breakdown = await Feedback.aggregate([
     { $match: { organizationId: orgId } },
     {
       $group: {
@@ -37,6 +45,10 @@ const getRoleBreakdown = async (orgId) => {
       },
     },
   ]);
+  
+  console.log("Role breakdown:", breakdown);
+  
+  return breakdown;
 };
 
 const calculatePriorityScore = (feedback) => {

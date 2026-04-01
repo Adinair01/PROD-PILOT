@@ -52,7 +52,10 @@ const login = async (req, res, next) => {
 
     res.json({
       message: "Login successful",
-      data: { user: result.user },
+      data: { 
+        user: result.user,
+        organization: result.organization,
+      },
     });
   } catch (err) {
     next(err);

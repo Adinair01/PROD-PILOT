@@ -58,8 +58,8 @@ module.exports = {
 };
 
 const loginUser = async ({ email, password }) => {
-  // Find user
-  const user = await User.findOne({ email });
+  // Find user with organization
+  const user = await User.findOne({ email }).populate('organizationId');
 
   if (!user) {
     const error = new Error("Invalid credentials");
@@ -79,7 +79,7 @@ const loginUser = async ({ email, password }) => {
   // Generate tokens
   const accessToken = signAccessToken({
     userId: user._id,
-    orgId: user.organizationId,
+    orgId: user.organizationId._id,
     role: user.role,
   });
 
@@ -90,7 +90,16 @@ const loginUser = async ({ email, password }) => {
   return {
     accessToken,
     refreshToken,
-    user,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+    organization: {
+      _id: user.organizationId._id,
+      name: user.organizationId.name,
+    },
   };
 };
 
