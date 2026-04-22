@@ -7,7 +7,9 @@ import {
 } from "recharts";
 import { BarChart2, ArrowLeft, LogOut, TrendingUp, Database, Activity, Building2 } from "lucide-react";
 import Toast from "../components/Toast";
+import DashboardLoader from "../components/DashboardLoader";
 import { getRoleDisplay } from "../utils/roleDisplay";
+import { usePageLoader } from "../utils/usePageLoader";
 import "../styles/Dashboard.css";
 
 const ROLE_COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#F59E0B", "#22C55E"];
@@ -18,6 +20,7 @@ export default function DataDashboard() {
   const [feedback, setFeedback] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const showLoader = usePageLoader(!loading);
   const [showToast, setShowToast] = useState(false);
   const [organization, setOrganization] = useState(null);
 
@@ -79,9 +82,7 @@ export default function DataDashboard() {
     return (((s.POSITIVE - s.NEGATIVE) / s.total) * 100).toFixed(1);
   }, [insights]);
 
-  if (loading) return (
-    <div className="loading-container"><div className="spinner" /><p>Loading Data Dashboard...</p></div>
-  );
+  if (showLoader) return <DashboardLoader />;
 
   return (
     <div className="dashboard">

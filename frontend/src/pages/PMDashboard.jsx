@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Toast from "../components/Toast";
 import { getRoleDisplay } from "../utils/roleDisplay";
+import { usePageLoader } from "../utils/usePageLoader";
 import "../styles/Dashboard.css";
 import "../styles/InsightsLoader.css";
 
@@ -181,6 +182,7 @@ export default function PMDashboard() {
   const [data, setData] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const showLoader = usePageLoader(!loading);
   const [showToast, setShowToast] = useState(false);
   const [organization, setOrganization] = useState(null);
 
@@ -254,7 +256,7 @@ export default function PMDashboard() {
     return "#22C55E";
   }, [data]);
 
-  if (loading) return <InsightsLoader />;
+  if (showLoader) return <InsightsLoader />;
 
   if (!data) return null;
 

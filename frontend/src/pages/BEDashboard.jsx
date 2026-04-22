@@ -3,7 +3,9 @@ import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Server, ArrowLeft, LogOut, Database, AlertTriangle, Activity, Building2 } from "lucide-react";
 import Toast from "../components/Toast";
+import DashboardLoader from "../components/DashboardLoader";
 import { getRoleDisplay } from "../utils/roleDisplay";
+import { usePageLoader } from "../utils/usePageLoader";
 import "../styles/Dashboard.css";
 
 export default function BEDashboard() {
@@ -11,6 +13,7 @@ export default function BEDashboard() {
   const [feedback, setFeedback] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const showLoader = usePageLoader(!loading);
   const [showToast, setShowToast] = useState(false);
   const [organization, setOrganization] = useState(null);
 
@@ -61,9 +64,7 @@ export default function BEDashboard() {
     errFeedback: feedback.filter((f) => errTerms.some((t) => f.message.toLowerCase().includes(t))),
   }), [feedback]);
 
-  if (loading) return (
-    <div className="loading-container"><div className="spinner" /><p>Loading Backend Dashboard...</p></div>
-  );
+  if (showLoader) return <DashboardLoader />;
 
   const renderList = (items) => items.map((f) => (
     <div key={f._id} className="issue-card">
