@@ -3,7 +3,9 @@ import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Monitor, ArrowLeft, LogOut, Layers, Zap, MessageSquare, Building2 } from "lucide-react";
 import Toast from "../components/Toast";
+import DashboardLoader from "../components/DashboardLoader";
 import { getRoleDisplay } from "../utils/roleDisplay";
+import { usePageLoader } from "../utils/usePageLoader";
 import "../styles/Dashboard.css";
 
 const UI_TERMS = ["ui", "design", "button", "screen", "mobile", "responsive", "layout", "style", "css", "component"];
@@ -14,6 +16,7 @@ export default function FEDashboard() {
   const [feedback, setFeedback] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const showLoader = usePageLoader(!loading);
   const [showToast, setShowToast] = useState(false);
   const [organization, setOrganization] = useState(null);
 
@@ -73,14 +76,7 @@ export default function FEDashboard() {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner" />
-        <p>Loading Frontend Dashboard...</p>
-      </div>
-    );
-  }
+  if (showLoader) return <DashboardLoader />;
 
   return (
     <div className="dashboard">

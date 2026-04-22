@@ -3,7 +3,9 @@ import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Bug, ArrowLeft, LogOut, ShieldCheck, AlertCircle, CheckCircle2, Building2 } from "lucide-react";
 import Toast from "../components/Toast";
+import DashboardLoader from "../components/DashboardLoader";
 import { getRoleDisplay } from "../utils/roleDisplay";
+import { usePageLoader } from "../utils/usePageLoader";
 import "../styles/Dashboard.css";
 
 const FILTERS = ["ALL", "NEGATIVE", "NEUTRAL", "POSITIVE"];
@@ -13,6 +15,7 @@ export default function QADashboard() {
   const [feedback, setFeedback] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const showLoader = usePageLoader(!loading);
   const [filter, setFilter] = useState("ALL");
   const [showToast, setShowToast] = useState(false);
   const [organization, setOrganization] = useState(null);
@@ -66,9 +69,7 @@ export default function QADashboard() {
     [feedback, filter]
   );
 
-  if (loading) return (
-    <div className="loading-container"><div className="spinner" /><p>Loading QA Dashboard...</p></div>
-  );
+  if (showLoader) return <DashboardLoader />;
 
   return (
     <div className="dashboard">
