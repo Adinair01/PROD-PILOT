@@ -25,7 +25,7 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(response.data.data.user));
       }
 
-      navigate("/dashboard");
+      navigate("/hub");
     } catch (err) {
       setError(err.response?.data?.error || "Login failed. Please check your credentials.");
     } finally {
