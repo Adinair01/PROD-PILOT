@@ -149,4 +149,4 @@ Top recurring issues: ${issueContext || "none"}`;
   }
 };
 
-module.exports = { analyzeSentiment, generateStructuredInsights };
+module.exports = { analyzeSentiment, generateStructuredInsights, callMistral };
