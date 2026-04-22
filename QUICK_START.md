@@ -1,6 +1,6 @@
-# 🚀 PROD PILOT - Quick Start Guide
+#  PROD PILOT - Quick Start Guide
 
-## ✅ COMPLETE! All 5 Dashboards Ready
+## COMPLETE! All 5 Dashboards Ready
 
 ---
 
@@ -10,7 +10,7 @@
 ```bash
 npm run dev
 ```
-Wait for: `✅ MongoDB connected` and `API running on :4000`
+Wait for: ` MongoDB connected` and `API running on :4000`
 
 ### Terminal 2 - Frontend:
 ```bash
@@ -139,8 +139,8 @@ Each role shows the SAME feedback but filtered/organized differently!
 
 ---
 
-## 🎉 YOU'RE READY!
+## YOU'RE READY!
 
 Your complete 5-dashboard system is running!
 
-Enjoy exploring each role's unique view! 🚀
+Enjoy exploring each role's unique view! 
