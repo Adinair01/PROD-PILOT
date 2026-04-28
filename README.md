@@ -1,6 +1,6 @@
 # PROD PILOT
 
-**Pre-development decision intelligence for product teams.**
+# **AI-Powered Feedback decision intelligence analysis platform for Product teams.**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
