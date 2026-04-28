@@ -5,7 +5,8 @@ import {
   Palette, 
   Server, 
   TrendingUp,
-  LogOut 
+  LogOut,
+  Cpu,
 } from "lucide-react";
 import "../styles/RoleSelector.css";
 
@@ -65,6 +66,10 @@ export default function RoleSelector() {
           <h1 className="logo">PROD PILOT</h1>
         </div>
         <div className="nav-right">
+          <button onClick={() => navigate("/decision-engine")} className="de-nav-btn">
+            <Cpu size={15} />
+            <span>Decision Engine</span>
+          </button>
           <button onClick={handleLogout} className="logout-btn">
             <LogOut size={18} />
             <span>Logout</span>
