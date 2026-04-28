@@ -72,8 +72,17 @@ Return ONLY valid JSON with this exact structure — no markdown, no explanation
   ],
   "riskIfIgnored": "one sentence on what happens if this is not addressed",
   "feedbackSignals": ["up to 3 direct quotes or paraphrases from team feedback that support this decision"],
+  "edgeCases": [
+    {
+      "scenario": "short name for this edge case (max 6 words)",
+      "description": "one sentence describing what could go wrong or be missed",
+      "mitigation": "one sentence on how to handle or prevent it"
+    }
+  ],
   "summary": "2-3 sentence plain English summary for stakeholders"
-}`;
+}
+
+For edgeCases: identify 2-4 realistic scenarios that could undermine the recommended actions or arise during implementation. Focus on technical risks, team dependency failures, timeline slippage, or assumptions that may not hold.`;
 
   const userPrompt = `PM PROBLEM STATEMENT:
 ${problemSummary}
