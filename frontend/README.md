@@ -1,16 +1,50 @@
-# React + Vite
+# PROD PILOT — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite single-page app for PROD PILOT. It provides the landing page, authentication, the role dashboards, and the Decision Engine UI.
 
-Currently, two official plugins are available:
+## Tech
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** with **React Router 7**
+- **Vite 7** (dev server + build)
+- **Recharts** for visualizations, **lucide-react** for icons
+- **Axios** with `withCredentials` for cookie-based auth
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+cd frontend
+cp .env.example .env   # set VITE_API_URL if your backend isn't on localhost:4000
+npm install
+npm run dev            # http://localhost:5173
+```
 
-## Expanding the ESLint configuration
+The backend must be running (see the root [README](../README.md)) for auth and data.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Environment
+
+| Variable       | Default                      | Description                          |
+| -------------- | ---------------------------- | ------------------------------------ |
+| `VITE_API_URL` | `http://localhost:4000/v1`   | Base URL of the backend API (`/v1`). |
+
+## Scripts
+
+| Command           | Description                          |
+| ----------------- | ------------------------------------ |
+| `npm run dev`     | Start the Vite dev server with HMR.  |
+| `npm run build`   | Production build to `dist/`.         |
+| `npm run preview` | Preview the production build.        |
+| `npm run lint`    | Lint with ESLint.                    |
+
+## Structure
+
+```
+src/
+├── api/         Axios instance + global 401 handling
+├── components/  Shared UI (DashboardNav, ProtectedRoute, ErrorBoundary, Toast, loaders)
+├── hooks/       Data hooks (useFeedback, useInsights)
+├── pages/       Routed views (Landing, Login, Signup, Hub, dashboards, DecisionEngine)
+├── utils/       Auth/session helpers and small utilities
+└── styles/      Page-scoped CSS
+```
+
+Authenticated routes are wrapped in `ProtectedRoute`; the axios interceptor clears the session and redirects to `/signin` on a `401`.
