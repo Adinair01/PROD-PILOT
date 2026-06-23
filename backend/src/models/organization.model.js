@@ -9,12 +9,12 @@ const organizationSchema = new mongoose.Schema(
     },
 
     domain: {
-  type: String,
-  unique: true,
-  sparse: true,   // ⭐ VERY IMPORTANT
-  lowercase: true,
-  trim: true,
-},
+      type: String,
+      unique: true,
+      sparse: true, // ⭐ VERY IMPORTANT
+      lowercase: true,
+      trim: true,
+    },
   },
   { timestamps: true }
 );

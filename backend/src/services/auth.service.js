@@ -1,31 +1,26 @@
 const Organization = require("../models/organization.model");
 const { User } = require("../models/user");
 const { hashPassword, verifyPassword } = require("../utils/hash");
-const {
-  signAccessToken,
-  signRefreshToken,
-  verifyRefreshToken,
-} = require("../utils/jwt");
+const { signAccessToken, signRefreshToken, verifyRefreshToken } = require("../utils/jwt");
+const { ApiError } = require("../utils/api-error");
+
+const toPublicUser = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+});
 
 const registerAdmin = async ({ name, email, password, orgName }) => {
-
   const existingOrg = await Organization.findOne({ name: orgName });
-
   if (existingOrg) {
-    const error = new Error("Organization already exists");
-error.statusCode = 409;
-throw error;
+    throw ApiError.conflict("Organization already exists");
   }
 
-  // create org
-  const organization = await Organization.create({
-    name: orgName,
-  });
+  const organization = await Organization.create({ name: orgName });
 
-  // hash password
   const passwordHash = await hashPassword(password);
 
-  // create admin
   const adminUser = await User.create({
     name,
     email,
@@ -34,68 +29,45 @@ throw error;
     organizationId: organization._id,
   });
 
-  // jwt
   const accessToken = signAccessToken({
     userId: adminUser._id,
     orgId: organization._id,
     role: adminUser.role,
   });
-
-  const refreshToken = signRefreshToken({
-    userId: adminUser._id,
-  });
+  const refreshToken = signRefreshToken({ userId: adminUser._id });
 
   return {
     accessToken,
     refreshToken,
-    user: adminUser,
-    organization,
+    user: toPublicUser(adminUser),
+    organization: { _id: organization._id, name: organization.name },
   };
 };
 
-module.exports = {
-  registerAdmin,
-};
-
 const loginUser = async ({ email, password }) => {
-  // Find user with organization
-  const user = await User.findOne({ email }).populate('organizationId');
+  const user = await User.findOne({ email }).populate("organizationId");
 
-  if (!user) {
-    const error = new Error("Invalid credentials");
-    error.statusCode = 401;
-    throw error;
+  // Run the password check even when the user is missing to avoid leaking
+  // which emails exist via response timing.
+  const isValid = user
+    ? await verifyPassword(password, user.passwordHash)
+    : await verifyPassword(password, "$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinv");
+
+  if (!user || !isValid) {
+    throw ApiError.unauthorized("Invalid credentials");
   }
 
-  // Verify password
-  const isValid = await verifyPassword(password, user.passwordHash);
-
-  if (!isValid) {
-    const error = new Error("Invalid credentials");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  // Generate tokens
   const accessToken = signAccessToken({
     userId: user._id,
     orgId: user.organizationId._id,
     role: user.role,
   });
-
-  const refreshToken = signRefreshToken({
-    userId: user._id,
-  });
+  const refreshToken = signRefreshToken({ userId: user._id });
 
   return {
     accessToken,
     refreshToken,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: toPublicUser(user),
     organization: {
       _id: user.organizationId._id,
       name: user.organizationId.name,
@@ -104,29 +76,25 @@ const loginUser = async ({ email, password }) => {
 };
 
 const refreshAccessToken = async (refreshToken) => {
+  let decoded;
   try {
-    const decoded = verifyRefreshToken(refreshToken);
-
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      const error = new Error("User not found");
-      error.statusCode = 404;
-      throw error;
-    }
-
-    const newAccessToken = signAccessToken({
-      userId: user._id,
-      orgId: user.organizationId,
-      role: user.role,
-    });
-
-    return { accessToken: newAccessToken };
-  } catch (err) {
-    const error = new Error("Invalid refresh token");
-    error.statusCode = 401;
-    throw error;
+    decoded = verifyRefreshToken(refreshToken);
+  } catch {
+    throw ApiError.unauthorized("Invalid refresh token");
   }
+
+  const user = await User.findById(decoded.userId);
+  if (!user) {
+    throw ApiError.unauthorized("Invalid refresh token");
+  }
+
+  const accessToken = signAccessToken({
+    userId: user._id,
+    orgId: user.organizationId,
+    role: user.role,
+  });
+
+  return { accessToken };
 };
 
 module.exports = {
