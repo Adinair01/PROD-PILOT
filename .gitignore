@@ -25,3 +25,8 @@ coverage/
 # IDE (keep local)
 .vscode/
 .idea/
+
+# AI tooling artifacts (keep local, never publish)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
