@@ -10,22 +10,26 @@ import QADashboard from "./pages/QADashboard";
 import FEDashboard from "./pages/FEDashboard";
 import BEDashboard from "./pages/BEDashboard";
 import DataDashboard from "./pages/DataDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/"                element={<Landing />} />
-        <Route path="/signin"          element={<Login />} />
-        <Route path="/signup"          element={<Signup />} />
-        <Route path="/hub"             element={<Hub />} />
-        <Route path="/decision-engine" element={<DecisionEngine />} />
-        <Route path="/dashboard"       element={<RoleSelector />} />
-        <Route path="/dashboard/pm"    element={<PMDashboard />} />
-        <Route path="/dashboard/qa"    element={<QADashboard />} />
-        <Route path="/dashboard/fe"    element={<FEDashboard />} />
-        <Route path="/dashboard/be"    element={<BEDashboard />} />
-        <Route path="/dashboard/data"  element={<DataDashboard />} />
+        {/* Public */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/signin" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* Authenticated */}
+        <Route path="/hub" element={<ProtectedRoute><Hub /></ProtectedRoute>} />
+        <Route path="/decision-engine" element={<ProtectedRoute><DecisionEngine /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><RoleSelector /></ProtectedRoute>} />
+        <Route path="/dashboard/pm" element={<ProtectedRoute><PMDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/qa" element={<ProtectedRoute><QADashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/fe" element={<ProtectedRoute><FEDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/be" element={<ProtectedRoute><BEDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/data" element={<ProtectedRoute><DataDashboard /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

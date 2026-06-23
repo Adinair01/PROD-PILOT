@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Target, BarChart2, Zap } from "lucide-react";
+import { storeSession } from "../utils/auth";
 import "../styles/Auth.css";
 
 export default function Login() {
@@ -17,14 +18,7 @@ export default function Login() {
     setError("");
     try {
       const response = await api.post("/auth/login", { email, password });
-
-      if (response.data.data.organization) {
-        localStorage.setItem("organization", JSON.stringify(response.data.data.organization));
-      }
-      if (response.data.data.user) {
-        localStorage.setItem("user", JSON.stringify(response.data.data.user));
-      }
-
+      storeSession(response.data.data);
       navigate("/hub");
     } catch (err) {
       setError(err.response?.data?.error || "Login failed. Please check your credentials.");
@@ -102,8 +96,9 @@ export default function Login() {
             )}
 
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label" htmlFor="login-email">Email Address</label>
               <input
+                id="login-email"
                 type="email"
                 className="form-input"
                 placeholder="you@company.com"
@@ -114,8 +109,9 @@ export default function Login() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
+              <label className="form-label" htmlFor="login-password">Password</label>
               <input
+                id="login-password"
                 type="password"
                 className="form-input"
                 placeholder="Enter your password"

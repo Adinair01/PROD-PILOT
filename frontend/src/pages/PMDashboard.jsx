@@ -1,19 +1,20 @@
-import { useEffect, useState, useMemo, useCallback, memo } from "react";
-import { api } from "../api/axios";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo, memo } from "react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   LineChart, Line,
 } from "recharts";
 import {
-  BarChart3, MessageSquare, ArrowLeft, LogOut,
-  TrendingUp, TrendingDown, Minus, Building2, Brain, FileText,
-  Users, Zap, ShieldAlert, AlertOctagon, CheckCircle2, Clock,
+  BarChart3, MessageSquare,
+  TrendingUp, TrendingDown, Minus, Brain, FileText,
+  Users, Zap, ShieldAlert, AlertOctagon, Clock,
 } from "lucide-react";
 import Toast from "../components/Toast";
+import DashboardNav from "../components/DashboardNav";
 import { getRoleDisplay } from "../utils/roleDisplay";
 import { usePageLoader } from "../utils/usePageLoader";
+import { useInsights } from "../hooks/useInsights";
+import { useFeedback } from "../hooks/useFeedback";
 import "../styles/Dashboard.css";
 import "../styles/InsightsLoader.css";
 
@@ -178,56 +179,31 @@ const InsightsLoader = memo(() => {
 InsightsLoader.displayName = "InsightsLoader";
 
 export default function PMDashboard() {
-  const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  // PM view is driven by aggregated insights (polled), and only submits feedback
+  // (no local list), so useFeedback runs without auto-fetching a list.
+  const { insights: data, loading, error, refetch } = useInsights({ pollMs: 20000 });
+  const { submitFeedback } = useFeedback({ autoFetch: false });
   const showLoader = usePageLoader(!loading);
-  const [showToast, setShowToast] = useState(false);
-  const [organization, setOrganization] = useState(null);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    const org = localStorage.getItem("organization");
-    if (org) setOrganization(JSON.parse(org));
-    fetchData();
-  }, []);
-
-  // Auto-poll every 20s so KPIs update when any team submits feedback
-  useEffect(() => {
-    const interval = setInterval(() => { fetchData(true); }, 20000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchData = useCallback(async (silent = false) => {
-    try {
-      if (!silent) setLoading(true);
-      const res = await api.get("/pm-insights");
-      setData(res.data);
-    } catch (err) {
-      if (err.response?.status === 401) navigate("/");
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [navigate]);
-
-  const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    const submitted = message;
-    setMessage("");
-    setShowToast(true);
+    const text = message.trim();
+    if (!text) return;
+    setSubmitting(true);
     try {
-      await api.post("/feedback", { message: submitted });
-      fetchData(true);
-    } catch { /* silent */ }
-  }, [message, fetchData]);
-
-  const handleLogout = useCallback(async () => {
-    try { await api.post("/auth/logout"); } catch { /* silent */ }
-    localStorage.removeItem("organization");
-    localStorage.removeItem("user");
-    navigate("/");
-  }, [navigate]);
+      await submitFeedback(text);
+      setMessage("");
+      setToast({ type: "success", message: "Feedback submitted successfully." });
+      refetch({ silent: true });
+    } catch {
+      setToast({ type: "error", message: "Couldn't submit your feedback. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const { sentimentData, roleData } = useMemo(() => {
     if (!data) return { sentimentData: [], roleData: [] };
@@ -258,7 +234,20 @@ export default function PMDashboard() {
 
   if (showLoader) return <InsightsLoader />;
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="dashboard">
+        <DashboardNav roleLabel="Product Manager" roleClass="pm" RoleIcon={BarChart3} />
+        <div className="dashboard-content">
+          <div className="empty-state">
+            <div className="empty-icon"><BarChart3 size={56} strokeWidth={1} /></div>
+            <h3>Couldn't load insights</h3>
+            <p>{error || "Please try again in a moment."}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const total = data.totalFeedback ?? data.analytics?.sentimentStats?.total ?? 0;
   const hasData = total > 0;
@@ -271,23 +260,9 @@ export default function PMDashboard() {
 
   return (
     <div className="dashboard">
-      {showToast && <Toast message="Feedback submitted successfully." onClose={() => setShowToast(false)} />}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <nav className="navbar">
-        <div className="nav-left">
-          <h1 className="logo">PROD PILOT</h1>
-          {organization && <span className="org-badge"><Building2 size={14} />{organization.name}</span>}
-          <span className="role-badge pm"><BarChart3 size={14} />Product Manager</span>
-        </div>
-        <div className="nav-right">
-          <button onClick={() => navigate("/dashboard")} className="back-btn">
-            <ArrowLeft size={16} /><span>Switch Role</span>
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            <LogOut size={16} /><span>Logout</span>
-          </button>
-        </div>
-      </nav>
+      <DashboardNav roleLabel="Product Manager" roleClass="pm" RoleIcon={BarChart3} />
 
       <div className="dashboard-content">
         <div className="dashboard-header">
@@ -524,7 +499,9 @@ export default function PMDashboard() {
               onChange={(e) => setMessage(e.target.value)}
               required
             />
-            <button type="submit" className="submit-btn">Submit Feedback</button>
+            <button type="submit" className="submit-btn" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Feedback"}
+            </button>
           </form>
         </div>
       </div>

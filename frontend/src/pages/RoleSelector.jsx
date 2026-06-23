@@ -1,63 +1,26 @@
 import { useNavigate } from "react-router-dom";
-import { 
-  BarChart3, 
-  Bug, 
-  Palette, 
-  Server, 
+import {
+  BarChart3,
+  Bug,
+  Palette,
+  Server,
   TrendingUp,
   LogOut,
   Cpu,
 } from "lucide-react";
+import { logout } from "../utils/auth";
 import "../styles/RoleSelector.css";
+
+const ROLES = [
+  { id: "pm", name: "Product Manager", Icon: BarChart3, description: "Strategic overview and product health insights", color: "#6366F1" },
+  { id: "qa", name: "QA Engineer", Icon: Bug, description: "Bug tracking and quality assurance", color: "#EF4444" },
+  { id: "fe", name: "Frontend Developer", Icon: Palette, description: "UI/UX feedback and performance monitoring", color: "#8B5CF6" },
+  { id: "be", name: "Backend Developer", Icon: Server, description: "API issues and backend performance", color: "#F59E0B" },
+  { id: "data", name: "Data Engineer", Icon: TrendingUp, description: "Data analytics and insights", color: "#22C55E" },
+];
 
 export default function RoleSelector() {
   const navigate = useNavigate();
-
-  const roles = [
-    {
-      id: "pm",
-      name: "Product Manager",
-      Icon: BarChart3,
-      description: "Strategic overview and product health insights",
-      color: "#6366F1",
-    },
-    {
-      id: "qa",
-      name: "QA Engineer",
-      Icon: Bug,
-      description: "Bug tracking and quality assurance",
-      color: "#EF4444",
-    },
-    {
-      id: "fe",
-      name: "Frontend Developer",
-      Icon: Palette,
-      description: "UI/UX feedback and performance monitoring",
-      color: "#8B5CF6",
-    },
-    {
-      id: "be",
-      name: "Backend Developer",
-      Icon: Server,
-      description: "API issues and backend performance",
-      color: "#F59E0B",
-    },
-    {
-      id: "data",
-      name: "Data Engineer",
-      Icon: TrendingUp,
-      description: "Data analytics and insights",
-      color: "#22C55E",
-    },
-  ];
-
-  const handleRoleSelect = (roleId) => {
-    navigate(`/dashboard/${roleId}`);
-  };
-
-  const handleLogout = async () => {
-    navigate("/");
-  };
 
   return (
     <div className="role-selector-container">
@@ -70,7 +33,7 @@ export default function RoleSelector() {
             <Cpu size={15} />
             <span>Decision Engine</span>
           </button>
-          <button onClick={handleLogout} className="logout-btn">
+          <button onClick={() => logout(navigate)} className="logout-btn">
             <LogOut size={18} />
             <span>Logout</span>
           </button>
@@ -84,34 +47,25 @@ export default function RoleSelector() {
         </div>
 
         <div className="roles-grid">
-          {roles.map((role) => {
-            const IconComponent = role.Icon;
+          {ROLES.map((role) => {
+            const { Icon } = role;
             return (
-              <div
+              <button
                 key={role.id}
+                type="button"
                 className="role-card"
-                onClick={() => handleRoleSelect(role.id)}
-                style={{ 
-                  borderColor: role.color,
-                  '--role-color': role.color 
-                }}
+                onClick={() => navigate(`/dashboard/${role.id}`)}
+                style={{ borderColor: role.color, "--role-color": role.color }}
               >
                 <div className="role-icon-wrapper" style={{ background: `${role.color}15` }}>
-                  <IconComponent 
-                    size={48} 
-                    color={role.color}
-                    strokeWidth={1.5}
-                  />
+                  <Icon size={48} color={role.color} strokeWidth={1.5} />
                 </div>
                 <h3>{role.name}</h3>
                 <p>{role.description}</p>
-                <button
-                  className="role-btn"
-                  style={{ background: role.color }}
-                >
+                <span className="role-btn" style={{ background: role.color }}>
                   Open Dashboard
-                </button>
-              </div>
+                </span>
+              </button>
             );
           })}
         </div>

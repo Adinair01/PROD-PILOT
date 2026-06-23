@@ -1,84 +1,56 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { api } from "../api/axios";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, BarChart, Bar, Cell,
 } from "recharts";
-import { BarChart2, ArrowLeft, LogOut, TrendingUp, Database, Activity, Building2 } from "lucide-react";
+import { BarChart2, TrendingUp, Database, Activity } from "lucide-react";
 import Toast from "../components/Toast";
 import DashboardLoader from "../components/DashboardLoader";
+import DashboardNav from "../components/DashboardNav";
 import { getRoleDisplay } from "../utils/roleDisplay";
 import { usePageLoader } from "../utils/usePageLoader";
+import { useFeedback } from "../hooks/useFeedback";
+import { useInsights } from "../hooks/useInsights";
 import "../styles/Dashboard.css";
 
 const ROLE_COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#F59E0B", "#22C55E"];
 
 export default function DataDashboard() {
-  const navigate = useNavigate();
-  const [insights, setInsights] = useState(null);
-  const [feedback, setFeedback] = useState([]);
+  const { insights, loading: insightsLoading, error: insightsError } = useInsights();
+  const { feedback, loading: feedbackLoading, error: feedbackError, submitFeedback } = useFeedback();
+  const showLoader = usePageLoader(!insightsLoading && !feedbackLoading);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const showLoader = usePageLoader(!loading);
-  const [showToast, setShowToast] = useState(false);
-  const [organization, setOrganization] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    const org = localStorage.getItem("organization");
-    if (org) setOrganization(JSON.parse(org));
-    fetchAll();
-  }, []);
+  const error = insightsError || feedbackError;
 
-  const fetchAll = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [insRes, fbRes] = await Promise.all([
-        api.get("/pm-insights"),
-        api.get("/feedback"),
-      ]);
-      setInsights(insRes.data);
-      setFeedback(fbRes.data);
-    } catch (err) {
-      if (err.response?.status === 401) navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    const submitted = message;
-    setMessage("");
-    setShowToast(true);
+    const text = message.trim();
+    if (!text) return;
+    setSubmitting(true);
     try {
-      await api.post("/feedback", { message: submitted });
-      fetchAll();
-    } catch { /* silent */ }
-  }, [message, fetchAll]);
-
-  const handleLogout = useCallback(async () => {
-    try { await api.post("/auth/logout"); } catch { /* silent */ }
-    localStorage.removeItem("organization");
-    localStorage.removeItem("user");
-    navigate("/");
-  }, [navigate]);
+      await submitFeedback(text);
+      setMessage("");
+      setToast({ type: "success", message: "Feedback submitted successfully." });
+    } catch {
+      setToast({ type: "error", message: "Couldn't submit your feedback. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const roleData = useMemo(() =>
     (insights?.analytics?.roleBreakdown || []).map((r) => ({ name: getRoleDisplay(r._id), count: r.count })),
     [insights]
   );
 
-  const timelineData = useMemo(() =>
-    insights?.analytics?.timelineStats || [],
-    [insights]
-  );
+  const timelineData = useMemo(() => insights?.analytics?.timelineStats || [], [insights]);
 
   const sentimentScore = useMemo(() => {
-    if (!insights) return 0;
-    const s = insights.analytics.sentimentStats;
-    if (s.total === 0) return 0;
+    const s = insights?.analytics?.sentimentStats;
+    if (!s || s.total === 0) return 0;
     return (((s.POSITIVE - s.NEGATIVE) / s.total) * 100).toFixed(1);
   }, [insights]);
 
@@ -86,25 +58,17 @@ export default function DataDashboard() {
 
   return (
     <div className="dashboard">
-      {showToast && <Toast message="Feedback submitted successfully." onClose={() => setShowToast(false)} />}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <nav className="navbar">
-        <div className="nav-left">
-          <h1 className="logo">PROD PILOT</h1>
-          {organization && <span className="org-badge"><Building2 size={14} />{organization.name}</span>}
-          <span className="role-badge data"><BarChart2 size={14} />Data Engineer</span>
-        </div>
-        <div className="nav-right">
-          <button onClick={() => navigate("/dashboard")} className="back-btn"><ArrowLeft size={16} /><span>Switch Role</span></button>
-          <button onClick={handleLogout} className="logout-btn"><LogOut size={16} /><span>Logout</span></button>
-        </div>
-      </nav>
+      <DashboardNav roleLabel="Data Engineer" roleClass="data" RoleIcon={BarChart2} />
 
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h2>Data Analytics Dashboard</h2>
           <p>Feedback trends, sentiment analysis, and team distribution metrics</p>
         </div>
+
+        {error && <div className="empty-state"><p>{error}</p></div>}
 
         <div className="metrics-grid">
           <div className="metric-card">
@@ -153,7 +117,7 @@ export default function DataDashboard() {
                     <YAxis stroke="#64748B" tick={{ fontSize: 12 }} allowDecimals={false} />
                     <Tooltip contentStyle={{ background: "#0F172A", border: "1px solid #1E293B", borderRadius: 8 }} />
                     <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                      {roleData.map((_, i) => <Cell key={i} fill={ROLE_COLORS[i % ROLE_COLORS.length]} />)}
+                      {roleData.map((entry, i) => <Cell key={entry.name} fill={ROLE_COLORS[i % ROLE_COLORS.length]} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -201,7 +165,9 @@ export default function DataDashboard() {
               onChange={(e) => setMessage(e.target.value)}
               required
             />
-            <button type="submit" className="submit-btn">Submit Feedback</button>
+            <button type="submit" className="submit-btn" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Feedback"}
+            </button>
           </form>
         </div>
       </div>

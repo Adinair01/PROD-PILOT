@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Zap, ShieldCheck, Lightbulb } from "lucide-react";
+import { storeSession } from "../utils/auth";
 import "../styles/Auth.css";
 
 export default function Signup() {
@@ -24,8 +25,10 @@ export default function Signup() {
     setLoading(true);
     setError("");
     try {
-      await api.post("/auth/admin/signup", formData);
-      navigate("/");
+      const response = await api.post("/auth/admin/signup", formData);
+      // Signup also authenticates (sets cookies), so go straight to the hub.
+      storeSession(response.data.data);
+      navigate("/hub");
     } catch (err) {
       setError(err.response?.data?.error || "Signup failed. Please try again.");
     } finally {
@@ -102,8 +105,9 @@ export default function Signup() {
             )}
 
             <div className="form-group">
-              <label className="form-label">Full Name</label>
+              <label className="form-label" htmlFor="signup-name">Full Name</label>
               <input
+                id="signup-name"
                 name="name"
                 className="form-input"
                 placeholder="Jane Smith"
@@ -114,8 +118,9 @@ export default function Signup() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Work Email</label>
+              <label className="form-label" htmlFor="signup-email">Work Email</label>
               <input
+                id="signup-email"
                 name="email"
                 type="email"
                 className="form-input"
@@ -127,8 +132,9 @@ export default function Signup() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
+              <label className="form-label" htmlFor="signup-password">Password</label>
               <input
+                id="signup-password"
                 name="password"
                 type="password"
                 className="form-input"
@@ -136,13 +142,14 @@ export default function Signup() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Organization Name</label>
+              <label className="form-label" htmlFor="signup-org">Organization Name</label>
               <input
+                id="signup-org"
                 name="orgName"
                 className="form-input"
                 placeholder="Acme Inc."

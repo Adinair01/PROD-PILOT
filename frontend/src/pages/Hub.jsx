@@ -1,24 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { useCallback } from "react";
 import { MessageSquare, Cpu, LogOut, Building2, ArrowRight } from "lucide-react";
+import { getOrganization, logout } from "../utils/auth";
 import "../styles/Hub.css";
 
 export default function Hub() {
   const navigate = useNavigate();
+  const org = getOrganization();
 
-  const org = (() => {
-    try { return JSON.parse(localStorage.getItem("organization")); } catch { return null; }
-  })();
-
-  const handleLogout = useCallback(async () => {
-    try {
-      const { api } = await import("../api/axios");
-      await api.post("/auth/logout");
-    } catch { /* silent */ }
-    localStorage.removeItem("organization");
-    localStorage.removeItem("user");
-    navigate("/");
-  }, [navigate]);
+  const handleLogout = () => logout(navigate);
 
   return (
     <div className="hub-wrap">

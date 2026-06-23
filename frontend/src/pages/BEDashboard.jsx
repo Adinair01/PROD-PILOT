@@ -1,70 +1,47 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { api } from "../api/axios";
-import { useNavigate } from "react-router-dom";
-import { Server, ArrowLeft, LogOut, Database, AlertTriangle, Activity, Building2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Server, Database, AlertTriangle, Activity } from "lucide-react";
 import Toast from "../components/Toast";
 import DashboardLoader from "../components/DashboardLoader";
+import DashboardNav from "../components/DashboardNav";
 import { getRoleDisplay } from "../utils/roleDisplay";
 import { usePageLoader } from "../utils/usePageLoader";
+import { useFeedback } from "../hooks/useFeedback";
 import "../styles/Dashboard.css";
 
+const API_TERMS = ["api", "endpoint", "server", "backend", "route", "request", "response"];
+const DB_TERMS = ["database", "db", "query", "mongo", "collection", "write", "read", "storage"];
+const ERR_TERMS = ["error", "500", "crash", "exception", "fail", "timeout"];
+
+const matches = (f, terms) => terms.some((t) => f.message.toLowerCase().includes(t));
+
 export default function BEDashboard() {
-  const navigate = useNavigate();
-  const [feedback, setFeedback] = useState([]);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const { feedback, loading, error, submitFeedback } = useFeedback();
   const showLoader = usePageLoader(!loading);
-  const [showToast, setShowToast] = useState(false);
-  const [organization, setOrganization] = useState(null);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    const org = localStorage.getItem("organization");
-    if (org) setOrganization(JSON.parse(org));
-    fetchFeedback();
-  }, []);
-
-  const fetchFeedback = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/feedback");
-      setFeedback(res.data);
-    } catch (err) {
-      if (err.response?.status === 401) navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    const submitted = message;
-    setMessage("");
-    setShowToast(true);
+    const text = message.trim();
+    if (!text) return;
+    setSubmitting(true);
     try {
-      await api.post("/feedback", { message: submitted });
-      fetchFeedback();
-    } catch { /* silent */ }
-  }, [message, fetchFeedback]);
-
-  const handleLogout = useCallback(async () => {
-    try { await api.post("/auth/logout"); } catch { /* silent */ }
-    localStorage.removeItem("organization");
-    localStorage.removeItem("user");
-    navigate("/");
-  }, [navigate]);
-
-  const apiTerms = ["api", "endpoint", "server", "backend", "route", "request", "response"];
-  const dbTerms = ["database", "db", "query", "mongo", "collection", "write", "read", "storage"];
-  const errTerms = ["error", "500", "crash", "exception", "fail", "timeout"];
+      await submitFeedback(text);
+      setMessage("");
+      setToast({ type: "success", message: "Feedback submitted successfully." });
+    } catch {
+      setToast({ type: "error", message: "Couldn't submit your feedback. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const { apiFeedback, dbFeedback, errFeedback } = useMemo(() => ({
-    apiFeedback: feedback.filter((f) => apiTerms.some((t) => f.message.toLowerCase().includes(t))),
-    dbFeedback: feedback.filter((f) => dbTerms.some((t) => f.message.toLowerCase().includes(t))),
-    errFeedback: feedback.filter((f) => errTerms.some((t) => f.message.toLowerCase().includes(t))),
+    apiFeedback: feedback.filter((f) => matches(f, API_TERMS)),
+    dbFeedback: feedback.filter((f) => matches(f, DB_TERMS)),
+    errFeedback: feedback.filter((f) => matches(f, ERR_TERMS)),
   }), [feedback]);
-
-  if (showLoader) return <DashboardLoader />;
 
   const renderList = (items) => items.map((f) => (
     <div key={f._id} className="issue-card">
@@ -77,27 +54,21 @@ export default function BEDashboard() {
     </div>
   ));
 
+  if (showLoader) return <DashboardLoader />;
+
   return (
     <div className="dashboard">
-      {showToast && <Toast message="Feedback submitted successfully." onClose={() => setShowToast(false)} />}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <nav className="navbar">
-        <div className="nav-left">
-          <h1 className="logo">PROD PILOT</h1>
-          {organization && <span className="org-badge"><Building2 size={14} />{organization.name}</span>}
-          <span className="role-badge be"><Server size={14} />Backend Engineer</span>
-        </div>
-        <div className="nav-right">
-          <button onClick={() => navigate("/dashboard")} className="back-btn"><ArrowLeft size={16} /><span>Switch Role</span></button>
-          <button onClick={handleLogout} className="logout-btn"><LogOut size={16} /><span>Logout</span></button>
-        </div>
-      </nav>
+      <DashboardNav roleLabel="Backend Engineer" roleClass="be" RoleIcon={Server} />
 
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h2>Backend Dashboard</h2>
           <p>API health, database issues, and server error monitoring</p>
         </div>
+
+        {error && <div className="empty-state"><p>{error}</p></div>}
 
         <div className="metrics-grid">
           <div className="metric-card health-bad">
@@ -162,7 +133,9 @@ export default function BEDashboard() {
               onChange={(e) => setMessage(e.target.value)}
               required
             />
-            <button type="submit" className="submit-btn">Submit Feedback</button>
+            <button type="submit" className="submit-btn" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Feedback"}
+            </button>
           </form>
         </div>
       </div>
