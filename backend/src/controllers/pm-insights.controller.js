@@ -1,16 +1,9 @@
 const { generatePMInsights } = require("../services/pm-insights.service");
+const { asyncHandler } = require("../utils/async-handler");
 
-const getPMInsights = async (req, res, next) => {
-  try {
-    const orgId = req.user.orgId;
-    console.log("[PM Insights] orgId:", orgId);
-    const insights = await generatePMInsights(orgId);
-    console.log("[PM Insights] healthScore:", insights.healthScore, "total:", insights.analytics.sentimentStats.total);
-    res.json(insights);
-  } catch (err) {
-    console.error("[PM Insights] Error:", err.message);
-    next(err);
-  }
-};
+const getPMInsights = asyncHandler(async (req, res) => {
+  const insights = await generatePMInsights(req.user.orgId);
+  res.json(insights);
+});
 
 module.exports = { getPMInsights };

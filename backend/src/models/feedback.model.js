@@ -6,7 +6,6 @@ const feedbackSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Organization",
       required: true,
-      index: true,
     },
 
     userId: {
@@ -24,6 +23,7 @@ const feedbackSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 2000,
     },
 
     sentiment: {
@@ -38,7 +38,8 @@ const feedbackSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-feedbackSchema.index({ organizationId: 1 });
+// Compound index matches the dominant query: org-scoped, sorted by recency.
+feedbackSchema.index({ organizationId: 1, createdAt: -1 });
 
 const Feedback = mongoose.model("Feedback", feedbackSchema);
 

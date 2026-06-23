@@ -1,10 +1,13 @@
+const mongoose = require("mongoose");
 const Feedback = require("../models/feedback.model");
 
+// Aggregation $match does not auto-cast strings to ObjectId (unlike find()),
+// so org ids from the JWT must be cast explicitly or the match returns nothing.
+const orgObjectId = (orgId) => new mongoose.Types.ObjectId(orgId);
+
 const getSentimentStats = async (orgId) => {
-  console.log("Getting sentiment stats for org:", orgId);
-  
   const stats = await Feedback.aggregate([
-    { $match: { organizationId: orgId } },
+    { $match: { organizationId: orgObjectId(orgId) } },
     {
       $group: {
         _id: "$sentiment",
@@ -12,8 +15,6 @@ const getSentimentStats = async (orgId) => {
       },
     },
   ]);
-
-  console.log("Sentiment stats raw:", stats);
 
   const total = stats.reduce((sum, s) => sum + s.count, 0);
 
@@ -25,19 +26,15 @@ const getSentimentStats = async (orgId) => {
   };
 
   stats.forEach((s) => {
-    result[s._id] = s.count;
+    if (s._id) result[s._id] = s.count;
   });
-
-  console.log("Sentiment stats result:", result);
 
   return result;
 };
 
 const getRoleBreakdown = async (orgId) => {
-  console.log("Getting role breakdown for org:", orgId);
-  
-  const breakdown = await Feedback.aggregate([
-    { $match: { organizationId: orgId } },
+  return Feedback.aggregate([
+    { $match: { organizationId: orgObjectId(orgId) } },
     {
       $group: {
         _id: "$role",
@@ -45,10 +42,6 @@ const getRoleBreakdown = async (orgId) => {
       },
     },
   ]);
-  
-  console.log("Role breakdown:", breakdown);
-  
-  return breakdown;
 };
 
 const calculatePriorityScore = (feedback) => {
@@ -58,8 +51,7 @@ const calculatePriorityScore = (feedback) => {
   if (feedback.sentiment === "NEUTRAL") base = 2;
   if (feedback.sentiment === "POSITIVE") base = 1;
 
-  const ageInHours =
-    (Date.now() - new Date(feedback.createdAt).getTime()) / (1000 * 60 * 60);
+  const ageInHours = (Date.now() - new Date(feedback.createdAt).getTime()) / (1000 * 60 * 60);
 
   const recencyBoost = ageInHours < 24 ? 2 : 0;
 

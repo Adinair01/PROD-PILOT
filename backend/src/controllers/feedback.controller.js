@@ -1,30 +1,16 @@
-const {
-  submitFeedback,
-  getOrgFeedback,
-} = require("../services/feedback.service");
+const { submitFeedback, getOrgFeedback } = require("../services/feedback.service");
+const { asyncHandler } = require("../utils/async-handler");
 
-const createFeedback = async (req, res, next) => {
-  try {
-    const result = await submitFeedback(req.user, req.body);
+const createFeedback = asyncHandler(async (req, res) => {
+  const result = await submitFeedback(req.user, req.body);
+  res.status(201).json({ message: "Feedback submitted", data: result });
+});
 
-    res.status(201).json({
-      message: "Feedback submitted",
-      data: result,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-const fetchFeedback = async (req, res, next) => {
-  try {
-    const data = await getOrgFeedback(req.user.orgId);
-
-    res.json(data);
-  } catch (err) {
-    next(err);
-  }
-};
+const fetchFeedback = asyncHandler(async (req, res) => {
+  const { page, limit } = req.query;
+  const { items, pagination } = await getOrgFeedback(req.user.orgId, { page, limit });
+  res.json({ items, pagination });
+});
 
 module.exports = {
   createFeedback,

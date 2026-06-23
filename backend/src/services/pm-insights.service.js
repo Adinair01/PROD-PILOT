@@ -5,11 +5,11 @@ const { generateStructuredInsights } = require("./ai.service");
 // ─── Role metadata ───────────────────────────────────────────────────────────
 
 const ROLE_META = {
-  QA:    { label: "Quality Assurance Team" },
-  FE:    { label: "Frontend Engineering Team" },
-  BE:    { label: "Backend Engineering Team" },
-  DATA:  { label: "Data Engineering Team" },
-  PM:    { label: "Product Management Team" },
+  QA: { label: "Quality Assurance Team" },
+  FE: { label: "Frontend Engineering Team" },
+  BE: { label: "Backend Engineering Team" },
+  DATA: { label: "Data Engineering Team" },
+  PM: { label: "Product Management Team" },
   ADMIN: { label: "Product Management Team" },
 };
 
@@ -18,11 +18,11 @@ const ENGINEERING_ROLES = new Set(["QA", "FE", "BE", "DATA"]);
 
 // Used for cluster-level team attribution — includes ALL roles so no team shows as "Not identified"
 const ROLE_LABEL_MAP = {
-  QA:    "QA Team",
-  FE:    "Frontend Team",
-  BE:    "Backend Team",
-  DATA:  "Data Team",
-  PM:    "Product Management Team",
+  QA: "QA Team",
+  FE: "Frontend Team",
+  BE: "Backend Team",
+  DATA: "Data Team",
+  PM: "Product Management Team",
   ADMIN: "Product Management Team",
 };
 
@@ -35,11 +35,7 @@ const roleLabel = (id) => ROLE_META[id]?.label || id;
  * Returns unique readable labels, e.g. ["QA Team", "Backend Team"].
  */
 const getAffectedTeams = (feedbackList) => {
-  const roles = new Set(
-    feedbackList
-      .map((f) => f.role)
-      .filter((r) => ENGINEERING_ROLES.has(r))
-  );
+  const roles = new Set(feedbackList.map((f) => f.role).filter((r) => ENGINEERING_ROLES.has(r)));
   // ROLE_LABEL_MAP covers all roles now, so this will always resolve correctly
   return Array.from(roles).map((r) => ROLE_LABEL_MAP[r] || r);
 };
@@ -52,7 +48,9 @@ const getSentimentStats = async (orgId) => {
     { $group: { _id: "$sentiment", count: { $sum: 1 } } },
   ]);
   const result = { POSITIVE: 0, NEGATIVE: 0, NEUTRAL: 0, total: 0 };
-  stats.forEach((s) => { if (s._id) result[s._id] = s.count; });
+  stats.forEach((s) => {
+    if (s._id) result[s._id] = s.count;
+  });
   result.total = result.POSITIVE + result.NEGATIVE + result.NEUTRAL;
   return result;
 };
@@ -68,7 +66,12 @@ const getRoleBreakdown = async (orgId) => {
 const getTimelineStats = async (orgId) => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   return Feedback.aggregate([
-    { $match: { organizationId: new mongoose.Types.ObjectId(orgId), createdAt: { $gte: sevenDaysAgo } } },
+    {
+      $match: {
+        organizationId: new mongoose.Types.ObjectId(orgId),
+        createdAt: { $gte: sevenDaysAgo },
+      },
+    },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -97,31 +100,63 @@ const getRoleFeedbackSamples = async (orgId) => {
 
 // ─── Feedback Clustering ─────────────────────────────────────────────────────
 
-const STOP_WORDS = new Set([
-  "the","a","an","is","it","in","on","at","to","for","of","and","or","but","not",
-  "with","this","that","are","was","were","be","been","have","has","had","do","does",
-  "did","will","would","could","should","may","might","i","we","you","they","he","she",
-  "our","your","their","my","also","very","just","more","some","when","what","which",
-  "there","been","from","after","before","about","into","than","then","them","these",
-]);
-
 // Phrase patterns that map to a clean cluster label
 const CLUSTER_PATTERNS = [
-  { label: "API Failure",        terms: ["api","endpoint","route","request","response","500","404"] },
-  { label: "Database Issue",     terms: ["database","db","mongo","query","write","read","storage","persist"] },
-  { label: "Performance",        terms: ["slow","lag","latency","performance","timeout","freeze","loading"] },
-  { label: "UI / UX Bug",        terms: ["ui","button","screen","layout","mobile","responsive","css","render","component"] },
-  { label: "Data Pipeline",      terms: ["etl","pipeline","aggregation","data","analytics","inconsistent","report"] },
-  { label: "Authentication",     terms: ["login","auth","token","session","logout","permission","access"] },
-  { label: "Test Failures",      terms: ["test","regression","coverage","bug","fail","broken","flaky"] },
-  { label: "Server Error",       terms: ["crash","exception","error","server","500","exception","stack"] },
+  {
+    label: "API Failure",
+    terms: ["api", "endpoint", "route", "request", "response", "500", "404"],
+  },
+  {
+    label: "Database Issue",
+    terms: ["database", "db", "mongo", "query", "write", "read", "storage", "persist"],
+  },
+  {
+    label: "Performance",
+    terms: ["slow", "lag", "latency", "performance", "timeout", "freeze", "loading"],
+  },
+  {
+    label: "UI / UX Bug",
+    terms: [
+      "ui",
+      "button",
+      "screen",
+      "layout",
+      "mobile",
+      "responsive",
+      "css",
+      "render",
+      "component",
+    ],
+  },
+  {
+    label: "Data Pipeline",
+    terms: ["etl", "pipeline", "aggregation", "data", "analytics", "inconsistent", "report"],
+  },
+  {
+    label: "Authentication",
+    terms: ["login", "auth", "token", "session", "logout", "permission", "access"],
+  },
+  {
+    label: "Test Failures",
+    terms: ["test", "regression", "coverage", "bug", "fail", "broken", "flaky"],
+  },
+  {
+    label: "Server Error",
+    terms: ["crash", "exception", "error", "server", "500", "exception", "stack"],
+  },
 ];
 
 const clusterFeedback = (feedbackList) => {
   const clusters = {};
 
   CLUSTER_PATTERNS.forEach((p) => {
-    clusters[p.label] = { issue: p.label, count: 0, severity: "LOW", roles: new Set(), messages: [] };
+    clusters[p.label] = {
+      issue: p.label,
+      count: 0,
+      severity: "LOW",
+      roles: new Set(),
+      messages: [],
+    };
   });
 
   feedbackList.forEach((f) => {
@@ -143,9 +178,10 @@ const clusterFeedback = (feedbackList) => {
       issue: c.issue,
       count: c.count,
       severity: c.count >= 4 ? "HIGH" : c.count >= 2 ? "MEDIUM" : "LOW",
-      roles: c.roles.size > 0
-        ? Array.from(c.roles).map((r) => ROLE_LABEL_MAP[r] || r)
-        : ["Unknown Team"],
+      roles:
+        c.roles.size > 0
+          ? Array.from(c.roles).map((r) => ROLE_LABEL_MAP[r] || r)
+          : ["Unknown Team"],
       sample: c.messages[0] || null,
     }))
     .sort((a, b) => b.count - a.count);
@@ -153,9 +189,17 @@ const clusterFeedback = (feedbackList) => {
 
 // ─── Fallback summaries (when Mistral is unavailable) ────────────────────────
 
-const buildFallbackInsights = (sentimentStats, roleBreakdown, clusters, roleSamples, allFeedback) => {
-  const negPct = sentimentStats.total > 0
-    ? Math.round((sentimentStats.NEGATIVE / sentimentStats.total) * 100) : 0;
+const buildFallbackInsights = (
+  sentimentStats,
+  roleBreakdown,
+  clusters,
+  roleSamples,
+  allFeedback
+) => {
+  const negPct =
+    sentimentStats.total > 0
+      ? Math.round((sentimentStats.NEGATIVE / sentimentStats.total) * 100)
+      : 0;
   const posPct = 100 - negPct;
 
   const healthStatus = negPct > 50 ? "CRITICAL" : negPct > 25 ? "DEGRADED" : "STABLE";
@@ -172,38 +216,49 @@ const buildFallbackInsights = (sentimentStats, roleBreakdown, clusters, roleSamp
       ? `Recurring issues around "${topCluster.issue}" reported by ${topCluster.roles.join(", ")}.`
       : "No dominant root cause identified from current feedback volume.",
     affectedTeams,
-    topIssues: clusters.slice(0, 3).map((c) => ({ issue: c.issue, severity: c.severity, teams: c.roles })),
+    topIssues: clusters
+      .slice(0, 3)
+      .map((c) => ({ issue: c.issue, severity: c.severity, teams: c.roles })),
     lines: [
       `System Health: ${healthStatus}. ${negPct}% negative feedback rate across ${sentimentStats.total} total entries.`,
-      ...roleBreakdown.map((r) => {
-        const neg = (roleSamples[r._id]?.NEGATIVE || []);
-        const pos = (roleSamples[r._id]?.POSITIVE || []);
-        if (neg.length > 0) return `${roleLabel(r._id)} reported ${neg.length} issue(s). Latest: "${neg[0].substring(0, 100)}${neg[0].length > 100 ? "..." : ""}"`;
-        if (pos.length > 0) return `${roleLabel(r._id)} submitted ${pos.length} positive update(s). No blockers reported.`;
-        return null;
-      }).filter(Boolean),
+      ...roleBreakdown
+        .map((r) => {
+          const neg = roleSamples[r._id]?.NEGATIVE || [];
+          const pos = roleSamples[r._id]?.POSITIVE || [];
+          if (neg.length > 0)
+            return `${roleLabel(r._id)} reported ${neg.length} issue(s). Latest: "${neg[0].substring(0, 100)}${neg[0].length > 100 ? "..." : ""}"`;
+          if (pos.length > 0)
+            return `${roleLabel(r._id)} submitted ${pos.length} positive update(s). No blockers reported.`;
+          return null;
+        })
+        .filter(Boolean),
     ],
   };
 
   const businessSummary = {
-    overallCondition: negPct > 50
-      ? "More than half the team is reporting problems that need immediate attention."
-      : negPct > 25
-      ? "Some teams are experiencing issues that should be addressed this sprint."
-      : `The team is largely satisfied with ${posPct}% positive responses.`,
-    teamExperience: affectedTeams.length > 0
-      ? `${affectedTeams.join(", ")} ${affectedTeams.length > 1 ? "teams are" : "team is"} experiencing friction that is slowing down delivery.`
-      : "No teams are currently reporting significant concerns.",
+    overallCondition:
+      negPct > 50
+        ? "More than half the team is reporting problems that need immediate attention."
+        : negPct > 25
+          ? "Some teams are experiencing issues that should be addressed this sprint."
+          : `The team is largely satisfied with ${posPct}% positive responses.`,
+    teamExperience:
+      affectedTeams.length > 0
+        ? `${affectedTeams.join(", ")} ${affectedTeams.length > 1 ? "teams are" : "team is"} experiencing friction that is slowing down delivery.`
+        : "No teams are currently reporting significant concerns.",
     productImpact: topCluster
       ? `Issues around "${topCluster.issue}" are directly affecting product stability and team velocity.`
       : "No critical product impact detected at this time.",
     lines: [
       `Based on ${sentimentStats.total} responses from ${roleBreakdown.length} team(s).`,
-      ...roleBreakdown.map((r) => {
-        const neg = (roleSamples[r._id]?.NEGATIVE || []);
-        if (neg.length > 0) return `${roleLabel(r._id)} team raised ${neg.length} concern(s). Example: "${neg[0].substring(0, 90)}${neg[0].length > 90 ? "..." : ""}"`;
-        return null;
-      }).filter(Boolean),
+      ...roleBreakdown
+        .map((r) => {
+          const neg = roleSamples[r._id]?.NEGATIVE || [];
+          if (neg.length > 0)
+            return `${roleLabel(r._id)} team raised ${neg.length} concern(s). Example: "${neg[0].substring(0, 90)}${neg[0].length > 90 ? "..." : ""}"`;
+          return null;
+        })
+        .filter(Boolean),
     ],
   };
 
@@ -238,7 +293,9 @@ const generatePMInsights = async (orgId) => {
       getTimelineStats(orgId),
       getRoleFeedbackSamples(orgId),
       Feedback.find({ organizationId: new mongoose.Types.ObjectId(orgId) })
-        .sort({ createdAt: -1 }).limit(100).lean(),
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean(),
     ]);
 
   // ── Cache check: return cached result if feedback count hasn't changed ──
@@ -248,15 +305,19 @@ const generatePMInsights = async (orgId) => {
     return cached.result;
   }
 
-  const healthScore = sentimentStats.total === 0
-    ? 100
-    : Math.round(((sentimentStats.POSITIVE - sentimentStats.NEGATIVE) / sentimentStats.total) * 100);
+  const healthScore =
+    sentimentStats.total === 0
+      ? 100
+      : Math.round(
+          ((sentimentStats.POSITIVE - sentimentStats.NEGATIVE) / sentimentStats.total) * 100
+        );
 
-  const riskLevel = sentimentStats.NEGATIVE > sentimentStats.POSITIVE
-    ? "High"
-    : sentimentStats.NEGATIVE > sentimentStats.total * 0.4
-    ? "Moderate"
-    : "Stable";
+  const riskLevel =
+    sentimentStats.NEGATIVE > sentimentStats.POSITIVE
+      ? "High"
+      : sentimentStats.NEGATIVE > sentimentStats.total * 0.4
+        ? "Moderate"
+        : "Stable";
 
   // Cluster all feedback
   const clusters = clusterFeedback(allNegFeedback);

@@ -18,7 +18,9 @@ const getOrgFeedbackContext = async (orgId) => {
 
   // Sentiment counts
   const counts = { POSITIVE: 0, NEGATIVE: 0, NEUTRAL: 0 };
-  feedbackList.forEach((f) => { if (f.sentiment) counts[f.sentiment]++; });
+  feedbackList.forEach((f) => {
+    if (f.sentiment) counts[f.sentiment]++;
+  });
   const total = feedbackList.length;
 
   // Group messages by role (last 3 per role)
