@@ -1,15 +1,17 @@
 const router = require("express").Router();
 
 const { requireAuth } = require("../middlewares/auth.middleware");
+const { validate } = require("../middlewares/validate.middleware");
 const {
-  createFeedback,
-  fetchFeedback,
-} = require("../controllers/feedback.controller");
+  createFeedbackSchema,
+  listFeedbackQuerySchema,
+} = require("../validators/feedback.validators");
+const { createFeedback, fetchFeedback } = require("../controllers/feedback.controller");
 
 // Submit feedback (any authenticated user)
-router.post("/", requireAuth, createFeedback);
+router.post("/", requireAuth, validate({ body: createFeedbackSchema }), createFeedback);
 
-// Get all feedback for organization (any authenticated user)
-router.get("/", requireAuth, fetchFeedback);
+// Get paginated feedback for the organization (any authenticated user)
+router.get("/", requireAuth, validate({ query: listFeedbackQuerySchema }), fetchFeedback);
 
 module.exports = router;

@@ -1,17 +1,22 @@
 const { HfInference } = require("@huggingface/inference");
 const https = require("https");
+const { logger } = require("../utils/logger");
 
 // ─── HuggingFace — Sentiment only ───────────────────────────────────────────
 const SENTIMENT_MODEL = "distilbert/distilbert-base-uncased-finetuned-sst-2-english";
 const hf = new HfInference(process.env.HF_API_KEY);
 
 const analyzeSentiment = async (text) => {
+  // No key configured → skip the network call and degrade gracefully.
+  if (!process.env.HF_API_KEY) {
+    return { sentiment: "NEUTRAL", score: 0 };
+  }
   try {
     const result = await hf.textClassification({ model: SENTIMENT_MODEL, inputs: text });
     const top = result[0];
     return { sentiment: top.label.toUpperCase(), score: parseFloat(top.score.toFixed(4)) };
   } catch (err) {
-    console.error("[AI] HuggingFace sentiment error:", err.message);
+    logger.warn({ err: err.message }, "[AI] HuggingFace sentiment failed, defaulting to NEUTRAL");
     return { sentiment: "NEUTRAL", score: 0 };
   }
 };
@@ -26,6 +31,9 @@ const MISTRAL_MODEL = "mistralai/mistral-small-4-119b-2603";
  */
 const callMistral = (messages) => {
   return new Promise((resolve, reject) => {
+    if (!NVIDIA_API_KEY) {
+      return reject(new Error("NVIDIA_API_KEY is not configured"));
+    }
     const body = JSON.stringify({
       model: MISTRAL_MODEL,
       messages,
@@ -47,7 +55,9 @@ const callMistral = (messages) => {
 
     const req = https.request(options, (res) => {
       let data = "";
-      res.on("data", (chunk) => { data += chunk; });
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
@@ -71,28 +81,36 @@ const callMistral = (messages) => {
  * Returns { technicalSummary, businessSummary, actionBlock }
  * Falls back to null on failure — caller handles graceful degradation.
  */
-const generateStructuredInsights = async ({ sentimentStats, roleBreakdown, topIssues, roleSamples, affectedTeams }) => {
+const generateStructuredInsights = async ({
+  sentimentStats,
+  roleBreakdown,
+  topIssues,
+  roleSamples,
+  affectedTeams,
+}) => {
   try {
-    const negPct = sentimentStats.total > 0
-      ? Math.round((sentimentStats.NEGATIVE / sentimentStats.total) * 100)
-      : 0;
+    const negPct =
+      sentimentStats.total > 0
+        ? Math.round((sentimentStats.NEGATIVE / sentimentStats.total) * 100)
+        : 0;
 
     // Build a compact context string for the model
-    const roleContext = roleBreakdown.map((r) => {
-      const samples = roleSamples[r._id] || {};
-      const neg = (samples.NEGATIVE || []).slice(0, 2).join(" | ");
-      const pos = (samples.POSITIVE || []).slice(0, 1).join(" | ");
-      return `${r._id} (${r.count} reports): NEG="${neg || "none"}" POS="${pos || "none"}"`;
-    }).join("\n");
+    const roleContext = roleBreakdown
+      .map((r) => {
+        const samples = roleSamples[r._id] || {};
+        const neg = (samples.NEGATIVE || []).slice(0, 2).join(" | ");
+        const pos = (samples.POSITIVE || []).slice(0, 1).join(" | ");
+        return `${r._id} (${r.count} reports): NEG="${neg || "none"}" POS="${pos || "none"}"`;
+      })
+      .join("\n");
 
-    const issueContext = topIssues.map((i) =>
-      `"${i.issue}" x${i.mentions} [${i.severity}] by ${i.roles.join(", ")}`
-    ).join(", ");
+    const issueContext = topIssues
+      .map((i) => `"${i.issue}" x${i.mentions} [${i.severity}] by ${i.roles.join(", ")}`)
+      .join(", ");
 
     // Pass pre-computed affected teams so Mistral doesn't hallucinate them
-    const affectedTeamsStr = affectedTeams && affectedTeams.length > 0
-      ? affectedTeams.join(", ")
-      : "None identified";
+    const affectedTeamsStr =
+      affectedTeams && affectedTeams.length > 0 ? affectedTeams.join(", ") : "None identified";
 
     const systemPrompt = `You are a product intelligence engine. Analyze engineering team feedback and return ONLY valid JSON with this exact structure:
 {
@@ -141,10 +159,10 @@ Top recurring issues: ${issueContext || "none"}`;
     if (result?.technicalSummary) result.technicalSummary.affectedTeams = affectedTeams || [];
     if (result?.actionBlock) result.actionBlock.affectedTeams = affectedTeams || [];
 
-    console.log("[AI] Mistral structured insights generated");
+    logger.debug("[AI] Mistral structured insights generated");
     return result;
   } catch (err) {
-    console.error("[AI] Mistral error:", err.message);
+    logger.warn({ err: err.message }, "[AI] Mistral structured insights failed, using fallback");
     return null;
   }
 };
