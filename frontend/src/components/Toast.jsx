@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle } from 'lucide-react';
 import '../styles/Toast.css';
 
-export default function Toast({ message, onClose, duration = 3500 }) {
+/**
+ * Transient notification. `type` switches between success and error styling so
+ * failed actions are never shown with a success affordance.
+ */
+export default function Toast({ message, onClose, duration = 3500, type = 'success' }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
@@ -11,15 +15,17 @@ export default function Toast({ message, onClose, duration = 3500 }) {
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
+  const isError = type === 'error';
+
   return (
     <div className="toast-container">
-      <div className="toast">
+      <div className={`toast ${isError ? 'toast--error' : ''}`}>
         <div className="toast-icon">
-          <CheckCircle size={24} />
+          {isError ? <AlertTriangle size={24} /> : <CheckCircle size={24} />}
         </div>
         <div className="toast-message">{message}</div>
         <button className="toast-cool-btn" onClick={onClose}>
-          Cool
+          {isError ? 'Dismiss' : 'Cool'}
         </button>
       </div>
     </div>
