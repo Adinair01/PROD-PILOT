@@ -140,6 +140,10 @@
   padding: 2.25rem 2rem;
   text-align: center;
   cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
+  display: block;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.35s ease,
               border-color 0.35s ease,
@@ -234,6 +238,7 @@
 /* ─── Role Button ─── */
 .role-btn {
   width: 100%;
+  display: block;
   padding: 0.85rem 1.25rem;
   border: none;
   border-radius: 11px;

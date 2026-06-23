@@ -30,11 +30,19 @@
   max-width: 400px;
 }
 
+.toast--error {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
 .toast-icon {
   color: #22C55E;
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.toast--error .toast-icon {
+  color: #EF4444;
 }
 
 .toast-message {

@@ -1,65 +1,44 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { api } from "../api/axios";
-import { useNavigate } from "react-router-dom";
-import { Monitor, ArrowLeft, LogOut, Layers, Zap, MessageSquare, Building2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Monitor, Layers, Zap, MessageSquare } from "lucide-react";
 import Toast from "../components/Toast";
 import DashboardLoader from "../components/DashboardLoader";
+import DashboardNav from "../components/DashboardNav";
 import { getRoleDisplay } from "../utils/roleDisplay";
 import { usePageLoader } from "../utils/usePageLoader";
+import { useFeedback } from "../hooks/useFeedback";
 import "../styles/Dashboard.css";
 
 const UI_TERMS = ["ui", "design", "button", "screen", "mobile", "responsive", "layout", "style", "css", "component"];
 const PERF_TERMS = ["slow", "loading", "performance", "lag", "render", "freeze", "animation"];
 
+const matches = (f, terms) => terms.some((t) => f.message.toLowerCase().includes(t));
+
 export default function FEDashboard() {
-  const navigate = useNavigate();
-  const [feedback, setFeedback] = useState([]);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const { feedback, loading, error, submitFeedback } = useFeedback();
   const showLoader = usePageLoader(!loading);
-  const [showToast, setShowToast] = useState(false);
-  const [organization, setOrganization] = useState(null);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    const org = localStorage.getItem("organization");
-    if (org) setOrganization(JSON.parse(org));
-    fetchFeedback();
-  }, []);
-
-  const fetchFeedback = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/feedback");
-      setFeedback(res.data);
-    } catch (err) {
-      if (err.response?.status === 401) navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    const submitted = message;
-    setMessage("");
-    setShowToast(true);
+    const text = message.trim();
+    if (!text) return;
+    setSubmitting(true);
     try {
-      await api.post("/feedback", { message: submitted });
-      fetchFeedback();
-    } catch (_) {}
-  }, [message, fetchFeedback]);
-
-  const handleLogout = useCallback(async () => {
-    try { await api.post("/auth/logout"); } catch (_) { /* silent */ }
-    localStorage.removeItem("organization");
-    localStorage.removeItem("user");
-    navigate("/");
-  }, [navigate]);
+      await submitFeedback(text);
+      setMessage("");
+      setToast({ type: "success", message: "Feedback submitted successfully." });
+    } catch {
+      setToast({ type: "error", message: "Couldn't submit your feedback. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const { uiFeedback, perfFeedback, negativeFeedback } = useMemo(() => ({
-    uiFeedback: feedback.filter((f) => UI_TERMS.some((t) => f.message.toLowerCase().includes(t))),
-    perfFeedback: feedback.filter((f) => PERF_TERMS.some((t) => f.message.toLowerCase().includes(t))),
+    uiFeedback: feedback.filter((f) => matches(f, UI_TERMS)),
+    perfFeedback: feedback.filter((f) => matches(f, PERF_TERMS)),
     negativeFeedback: feedback.filter((f) => f.sentiment === "NEGATIVE"),
   }), [feedback]);
 
@@ -69,9 +48,9 @@ export default function FEDashboard() {
         <span className={`sentiment-badge ${f.sentiment?.toLowerCase()}`}>{f.sentiment}</span>
         <span className="issue-date">{new Date(f.createdAt).toLocaleString()}</span>
       </div>
-        <span className="issue-reporter">From {getRoleDisplay(f.role)}</span>
+      <p className="issue-message">{f.message}</p>
       <div className="issue-footer">
-        <span className="issue-reporter">From {f.role}</span>
+        <span className="issue-reporter">From {getRoleDisplay(f.role)}</span>
       </div>
     </div>
   );
@@ -80,41 +59,17 @@ export default function FEDashboard() {
 
   return (
     <div className="dashboard">
-      {showToast && (
-        <Toast message="Feedback submitted successfully." onClose={() => setShowToast(false)} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <nav className="navbar">
-        <div className="nav-left">
-          <h1 className="logo">PROD PILOT</h1>
-          {organization && (
-            <span className="org-badge">
-              <Building2 size={14} />
-              {organization.name}
-            </span>
-          )}
-          <span className="role-badge fe">
-            <Monitor size={14} />
-            Frontend Engineer
-          </span>
-        </div>
-        <div className="nav-right">
-          <button onClick={() => navigate("/dashboard")} className="back-btn">
-            <ArrowLeft size={16} />
-            <span>Switch Role</span>
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </nav>
+      <DashboardNav roleLabel="Frontend Engineer" roleClass="fe" RoleIcon={Monitor} />
 
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h2>Frontend Dashboard</h2>
           <p>UI/UX feedback, performance issues, and component health</p>
         </div>
+
+        {error && <div className="empty-state"><p>{error}</p></div>}
 
         <div className="metrics-grid">
           <div className="metric-card">
@@ -175,7 +130,9 @@ export default function FEDashboard() {
               onChange={(e) => setMessage(e.target.value)}
               required
             />
-            <button type="submit" className="submit-btn">Submit Feedback</button>
+            <button type="submit" className="submit-btn" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Feedback"}
+            </button>
           </form>
         </div>
       </div>

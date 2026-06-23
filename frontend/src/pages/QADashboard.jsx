@@ -1,61 +1,38 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { api } from "../api/axios";
-import { useNavigate } from "react-router-dom";
-import { Bug, ArrowLeft, LogOut, ShieldCheck, AlertCircle, CheckCircle2, Building2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Bug, ShieldCheck, AlertCircle, CheckCircle2 } from "lucide-react";
 import Toast from "../components/Toast";
 import DashboardLoader from "../components/DashboardLoader";
+import DashboardNav from "../components/DashboardNav";
 import { getRoleDisplay } from "../utils/roleDisplay";
 import { usePageLoader } from "../utils/usePageLoader";
+import { useFeedback } from "../hooks/useFeedback";
 import "../styles/Dashboard.css";
 
 const FILTERS = ["ALL", "NEGATIVE", "NEUTRAL", "POSITIVE"];
 
 export default function QADashboard() {
-  const navigate = useNavigate();
-  const [feedback, setFeedback] = useState([]);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const { feedback, loading, error, submitFeedback } = useFeedback();
   const showLoader = usePageLoader(!loading);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState("ALL");
-  const [showToast, setShowToast] = useState(false);
-  const [organization, setOrganization] = useState(null);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    const org = localStorage.getItem("organization");
-    if (org) setOrganization(JSON.parse(org));
-    fetchFeedback();
-  }, []);
-
-  const fetchFeedback = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/feedback");
-      setFeedback(res.data);
-    } catch (err) {
-      if (err.response?.status === 401) navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    const submitted = message;
-    setMessage("");
-    setShowToast(true);
+    const text = message.trim();
+    if (!text) return;
+    setSubmitting(true);
     try {
-      await api.post("/feedback", { message: submitted });
-      fetchFeedback();
-    } catch { /* silent */ }
-  }, [message, fetchFeedback]);
-
-  const handleLogout = useCallback(async () => {
-    try { await api.post("/auth/logout"); } catch { /* silent */ }
-    localStorage.removeItem("organization");
-    localStorage.removeItem("user");
-    navigate("/");
-  }, [navigate]);
+      await submitFeedback(text);
+      setMessage("");
+      setToast({ type: "success", message: "Bug report submitted successfully." });
+    } catch {
+      setToast({ type: "error", message: "Couldn't submit your report. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const counts = useMemo(() => ({
     NEGATIVE: feedback.filter((f) => f.sentiment === "NEGATIVE").length,
@@ -73,25 +50,17 @@ export default function QADashboard() {
 
   return (
     <div className="dashboard">
-      {showToast && <Toast message="Bug report submitted successfully." onClose={() => setShowToast(false)} />}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <nav className="navbar">
-        <div className="nav-left">
-          <h1 className="logo">PROD PILOT</h1>
-          {organization && <span className="org-badge"><Building2 size={14} />{organization.name}</span>}
-          <span className="role-badge qa"><Bug size={14} />QA Engineer</span>
-        </div>
-        <div className="nav-right">
-          <button onClick={() => navigate("/dashboard")} className="back-btn"><ArrowLeft size={16} /><span>Switch Role</span></button>
-          <button onClick={handleLogout} className="logout-btn"><LogOut size={16} /><span>Logout</span></button>
-        </div>
-      </nav>
+      <DashboardNav roleLabel="QA Engineer" roleClass="qa" RoleIcon={Bug} />
 
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h2>QA Dashboard</h2>
           <p>Bug tracking, issue monitoring, and quality assurance</p>
         </div>
+
+        {error && <div className="empty-state"><p>{error}</p></div>}
 
         <div className="metrics-grid">
           <div className="metric-card health-bad">
@@ -155,7 +124,9 @@ export default function QADashboard() {
               onChange={(e) => setMessage(e.target.value)}
               required
             />
-            <button type="submit" className="submit-btn">Submit Bug Report</button>
+            <button type="submit" className="submit-btn" disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Bug Report"}
+            </button>
           </form>
         </div>
       </div>
