@@ -1,18 +1,16 @@
-const { z } = require("zod");     //Zod validates data to ensure it's in the correct format. It prevents bad data from reaching your database.
-const { ROLES } = require("../models/user");
+const { z } = require("zod");
 
-const registerSchema = z.object({
-  orgId: z.string().min(2),
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  role: z.enum(ROLES),
+// Admin signup bootstraps a new organization + its first (ADMIN) user.
+const adminSignupSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+  orgName: z.string().trim().min(2, "Organization name must be at least 2 characters").max(120),
 });
 
 const loginSchema = z.object({
-  orgId: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(1, "Password is required").max(128),
 });
 
-module.exports = { registerSchema, loginSchema };
+module.exports = { adminSignupSchema, loginSchema };
