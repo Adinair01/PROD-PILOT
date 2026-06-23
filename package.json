@@ -1,15 +1,32 @@
 {
   "name": "prodpilot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Pre-development decision intelligence platform — captures role-specific engineering feedback, analyzes sentiment, and generates AI-grounded go/no-go decisions for product teams.",
   "scripts": {
     "dev": "node --watch ./backend/src/server.js",
-    "start": "node ./backend/src/server.js"
+    "start": "node ./backend/src/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"backend/**/*.js\" \"tests/**/*.js\"",
+    "format:check": "prettier --check \"backend/**/*.js\" \"tests/**/*.js\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "product-management",
+    "decision-intelligence",
+    "feedback",
+    "sentiment-analysis",
+    "express",
+    "mongodb",
+    "react"
+  ],
+  "author": "Aditya Nair",
+  "license": "MIT",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@huggingface/inference": "^4.13.15",
     "bcrypt": "^6.0.0",
@@ -21,9 +38,20 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.4",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.13.0",
+    "mongodb-memory-server": "^10.1.2",
+    "nodemon": "^3.1.11",
+    "pino-pretty": "^13.0.0",
+    "prettier": "^3.4.2",
+    "supertest": "^7.0.0",
+    "vitest": "^2.1.8"
   }
 }

@@ -311,7 +311,7 @@ Base URL: `/v1`
 | Method | Endpoint | What it does | Auth |
 |--------|----------|--------------|------|
 | `POST` | `/v1/feedback` | Submit feedback (auto-scored for sentiment) | Authenticated |
-| `GET` | `/v1/feedback` | List all feedback for your org | Authenticated |
+| `GET` | `/v1/feedback` | List paginated feedback for your org (`?page`, `?limit`) | Authenticated |
 
 ### Analytics & Insights
 
@@ -410,18 +410,19 @@ cp backend/.env.example backend/.env
 
 | Variable | Required | Default | What it controls |
 |----------|----------|---------|------------------|
-| `PORT` | Yes | `4000` | Server port |
+| `NODE_ENV` | No | `development` | `development` / `test` / `production` |
+| `PORT` | No | `4000` | Server port |
 | `MONGO_URI` | Yes | — | Your MongoDB connection string |
-| `JWT_SECRET` | Yes | — | Signs access tokens (keep this long and random) |
+| `JWT_ACCESS_SECRET` | Yes | — | Signs access tokens (long & random, min 16 chars) |
 | `JWT_REFRESH_SECRET` | Yes | — | Signs refresh tokens (different from access secret) |
-| `JWT_EXPIRES_IN` | Yes | `15m` | How long access tokens last |
-| `JWT_REFRESH_EXPIRES_IN` | Yes | `7d` | How long refresh tokens last |
+| `ACCESS_TOKEN_TTL` | No | `15m` | How long access tokens last |
+| `REFRESH_TOKEN_TTL` | No | `7d` | How long refresh tokens last |
 | `COOKIE_SECURE` | No | `false` | Set `true` when running behind HTTPS |
 | `CORS_ORIGIN` | Yes | — | Comma-separated frontend origins |
 | `HF_API_KEY` | No | — | Enables AI sentiment — without it, defaults to NEUTRAL |
 | `NVIDIA_API_KEY` | No | — | Enables AI summaries — without it, uses rule-based fallback |
 
-The platform works completely without the AI keys. You get manual sentiment labeling fallbacks and deterministic insights instead of AI-generated ones. Not ideal, but functional.
+The environment is validated on boot — required secrets and `MONGO_URI` must be present or the server exits with a readable error. The platform works completely without the AI keys: you get NEUTRAL sentiment fallbacks and deterministic rule-based insights instead of AI-generated ones.
 
 ---
 
@@ -444,17 +445,22 @@ npm install
 npm run dev
 ```
 
-Hit `http://localhost:4000/health` — you should get `{ ok: true }`.
+Hit `http://localhost:4000/health` — you should get `{ "status": "ok" }`. `GET /health/ready` additionally reports database connectivity.
 
 ### Start the frontend
 
 ```bash
 cd frontend
+cp .env.example .env   # set VITE_API_URL if the backend isn't on localhost:4000
 npm install
 npm run dev
 ```
 
 Opens at `http://localhost:5173`. Make sure your `CORS_ORIGIN` includes this URL.
+
+### Quality checks
+
+From the repository root: `npm run lint`, `npm run format:check`, and `npm test` (Vitest + Supertest against an in-memory MongoDB). CI runs these on every push and PR.
 
 ### Your first session
 

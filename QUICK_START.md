@@ -1,146 +1,66 @@
-#  PROD PILOT - Quick Start Guide
+# PROD PILOT — Quick Start
 
-## COMPLETE! All 5 Dashboards Ready
+Get the full stack running locally in a few minutes.
 
----
+## Prerequisites
 
-## 🎯 START THE APPLICATION
+- Node.js 18+ (an `.nvmrc` pins 20)
+- MongoDB running locally, or a MongoDB Atlas connection string
 
-### Terminal 1 - Backend:
+## 1. Backend
+
+From the repository root:
+
 ```bash
+cp backend/.env.example backend/.env   # then edit the values
+npm install
 npm run dev
 ```
-Wait for: ` MongoDB connected` and `API running on :4000`
 
-### Terminal 2 - Frontend:
+Set at least these in `backend/.env`:
+
+| Variable             | Notes                                              |
+| -------------------- | -------------------------------------------------- |
+| `MONGO_URI`          | Local Mongo or an Atlas URI.                       |
+| `JWT_ACCESS_SECRET`  | Long random string (min 16 chars).                 |
+| `JWT_REFRESH_SECRET` | Different long random string.                      |
+| `CORS_ORIGIN`        | `http://localhost:5173` for local dev.             |
+| `HF_API_KEY`         | Optional — sentiment falls back to NEUTRAL if unset. |
+| `NVIDIA_API_KEY`     | Optional — AI summaries fall back to rule-based.   |
+
+The server validates the environment on boot and exits with a clear message if anything required is missing. You should see `MongoDB connected` and `API running on :4000`.
+
+## 2. Frontend
+
+In a second terminal:
+
 ```bash
 cd frontend
+cp .env.example .env   # set VITE_API_URL if the backend isn't on localhost:4000
+npm install
 npm run dev
 ```
-Wait for: `Local: http://localhost:5173/`
 
----
+Open **http://localhost:5173**.
 
-## 📱 TEST THE COMPLETE FLOW
+## 3. First run
 
-### 1. Open Browser
-Go to: **http://localhost:5173**
+1. Click **Create your organization** and complete signup (name, email, password ≥ 8 chars, organization name). Signup bootstraps your org and its first admin, and logs you in.
+2. You land on the **Hub** — choose **Feedback Intelligence** or the **Decision Engine**.
+3. **Feedback Intelligence** opens the role selector. Pick a role (PM, QA, Frontend, Backend, Data) to open that dashboard.
+4. Submit feedback from any dashboard. Sentiment is scored automatically and aggregated insights update on the PM dashboard.
+5. Open the **Decision Engine** to generate a structured, feedback-grounded action plan for a problem statement.
 
-### 2. Create Account (First Time)
-- Click "Create your organization"
-- Fill in:
-  - Name: Your Name
-  - Email: your@email.com
-  - Password: password123
-  - Organization: Your Company
-- Click "Create Organization"
+## Verifying the backend
 
-### 3. Login
-- Email: your@email.com
-- Password: password123
-- Click "Sign In"
+```bash
+npm run lint          # ESLint
+npm run format:check  # Prettier
+npm test              # Vitest + Supertest (in-memory MongoDB)
+```
 
-### 4. Role Selector (NEW!)
-You'll see 5 beautiful role cards:
-- 📊 Product Manager
-- 🐛 QA Engineer
-- 🎨 Frontend Developer
-- ⚙️ Backend Developer
-- 📈 Data Engineer
+## Troubleshooting
 
-### 5. Try Each Dashboard
-Click each role to see different views:
-
-**Product Manager**:
-- Health Score
-- Sentiment charts
-- Strategic insights
-
-**QA Engineer**:
-- Bug tracker
-- Filter by severity
-- Issue list
-
-**Frontend Developer**:
-- UI/UX feedback
-- Performance issues
-- Design problems
-
-**Backend Developer**:
-- API errors
-- Server issues
-- Database problems
-
-**Data Engineer**:
-- Analytics charts
-- Trend analysis
-- Data insights
-
-### 6. Navigate Easily
-- **Switch Role**: Click "← Switch Role" button (top right)
-- **Logout**: Click "Logout" button
-
-### 7. Submit Feedback
-Each dashboard has a feedback form at the bottom:
-- Type your feedback
-- Click "Submit Feedback"
-- See it appear in the dashboard!
-
----
-
-## 🎨 WHAT YOU'LL SEE
-
-### Role Selector Page:
-- 5 colorful cards in a grid
-- Hover effects with animations
-- Click any card to enter that dashboard
-
-### Each Dashboard Has:
-- Role badge (colored, top left)
-- Switch Role button (top right)
-- Logout button (top right)
-- Role-specific metrics (3 cards)
-- Charts and visualizations
-- Feedback list/issues
-- Submit feedback form
-
----
-
-## 💡 TIP: Test Different Roles
-
-1. Start with **Product Manager** - See overall health
-2. Switch to **QA** - See bug tracking
-3. Try **Frontend** - See UI issues
-4. Check **Backend** - See API problems
-5. View **Data** - See analytics
-
-Each role shows the SAME feedback but filtered/organized differently!
-
----
-
-## 🐛 TROUBLESHOOTING
-
-### Can't see dashboards?
-- Make sure both backend AND frontend are running
-- Check backend shows "MongoDB connected"
-- Check frontend shows "Local: http://localhost:5173"
-
-### Login not working?
-- Make sure you created an account first (signup)
-- Check backend terminal for errors
-- Try refreshing the page
-
-### Charts empty?
-- Submit some feedback first!
-- Try different sentiment words:
-  - Positive: "great", "good", "love"
-  - Negative: "bug", "slow", "issue"
-  - Neutral: anything else
-
----
-
-## YOU'RE READY!
-
-Your complete 5-dashboard system is running!
-
-Enjoy exploring each role's unique view! 
+- **Server won't start** — read the boot error; a missing/short `JWT_*` secret or absent `MONGO_URI` will halt startup by design.
+- **Login/requests fail with CORS errors** — ensure `CORS_ORIGIN` matches the frontend origin exactly.
+- **Charts are empty** — submit some feedback first; insights are derived from real entries.
