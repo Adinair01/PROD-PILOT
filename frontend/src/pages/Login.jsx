@@ -119,6 +119,9 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <div style={{ textAlign: "right", marginTop: "0.4rem" }}>
+                <a href="/forgot-password" style={{ fontSize: "0.8rem" }}>Forgot password?</a>
+              </div>
             </div>
 
             <button type="submit" className="auth-btn" disabled={loading}>

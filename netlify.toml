@@ -1,0 +1,17 @@
+# Netlify config for the PROD PILOT frontend (alternative to Vercel).
+# Deploy: connect this repo in Netlify — it reads this file automatically.
+# Set VITE_API_URL in Netlify → Site settings → Environment variables
+# (it is inlined at build time and MUST end in /v1, e.g.
+#  https://prodpilot-api.onrender.com/v1).
+
+[build]
+  base = "frontend"          # run the build from the frontend/ subdirectory
+  command = "npm run build"
+  publish = "dist"           # relative to base → frontend/dist
+
+# SPA fallback: serve index.html for any path that isn't a real file, so a
+# refresh on /dashboard/pm is handled by React Router instead of 404ing.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -52,4 +52,5 @@ module.exports = {
   clearAuthCookies,
   accessCookieOptions,
   refreshCookieOptions,
+  REFRESH_TOKEN_MAX_AGE,
 };

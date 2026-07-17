@@ -34,4 +34,7 @@ const decisionHistorySchema = new mongoose.Schema(
 // Index for fast org-scoped history queries
 decisionHistorySchema.index({ organizationId: 1, createdAt: -1 });
 
-module.exports = mongoose.model("DecisionHistory", decisionHistorySchema);
+// Guards against OverwriteModelError when this module is evaluated more than
+// once (e.g. Vitest/Vite's module graph can load the same CJS file twice).
+module.exports =
+  mongoose.models.DecisionHistory || mongoose.model("DecisionHistory", decisionHistorySchema);

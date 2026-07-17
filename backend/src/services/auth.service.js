@@ -1,7 +1,8 @@
 const Organization = require("../models/organization.model");
 const { User } = require("../models/user");
 const { hashPassword, verifyPassword } = require("../utils/hash");
-const { signAccessToken, signRefreshToken, verifyRefreshToken } = require("../utils/jwt");
+const { signAccessToken } = require("../utils/jwt");
+const { createSession, rotateSession, revokeSession } = require("./session.service");
 const { ApiError } = require("../utils/api-error");
 
 const toPublicUser = (user) => ({
@@ -34,7 +35,7 @@ const registerAdmin = async ({ name, email, password, orgName }) => {
     orgId: organization._id,
     role: adminUser.role,
   });
-  const refreshToken = signRefreshToken({ userId: adminUser._id });
+  const refreshToken = await createSession(adminUser._id);
 
   return {
     accessToken,
@@ -62,7 +63,7 @@ const loginUser = async ({ email, password }) => {
     orgId: user.organizationId._id,
     role: user.role,
   });
-  const refreshToken = signRefreshToken({ userId: user._id });
+  const refreshToken = await createSession(user._id);
 
   return {
     accessToken,
@@ -75,15 +76,12 @@ const loginUser = async ({ email, password }) => {
   };
 };
 
-const refreshAccessToken = async (refreshToken) => {
-  let decoded;
-  try {
-    decoded = verifyRefreshToken(refreshToken);
-  } catch {
-    throw ApiError.unauthorized("Invalid refresh token");
-  }
+const refreshSession = async (refreshToken) => {
+  const { userId, rawToken } = await rotateSession(refreshToken);
 
-  const user = await User.findById(decoded.userId);
+  // No .populate() here — only the raw orgId is needed for the JWT payload,
+  // matching the original refreshAccessToken behavior.
+  const user = await User.findById(userId);
   if (!user) {
     throw ApiError.unauthorized("Invalid refresh token");
   }
@@ -94,11 +92,16 @@ const refreshAccessToken = async (refreshToken) => {
     role: user.role,
   });
 
-  return { accessToken };
+  return { accessToken, refreshToken: rawToken };
+};
+
+const logoutUser = async (refreshToken) => {
+  await revokeSession(refreshToken);
 };
 
 module.exports = {
   registerAdmin,
   loginUser,
-  refreshAccessToken,
+  refreshSession,
+  logoutUser,
 };

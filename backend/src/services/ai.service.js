@@ -6,13 +6,20 @@ const { logger } = require("../utils/logger");
 const SENTIMENT_MODEL = "distilbert/distilbert-base-uncased-finetuned-sst-2-english";
 const hf = new HfInference(process.env.HF_API_KEY);
 
+// Cap how long we wait on the upstream so a slow/hung inference call can never
+// tie up a request. On timeout the AbortSignal rejects and we degrade to NEUTRAL.
+const HF_TIMEOUT_MS = 8000;
+
 const analyzeSentiment = async (text) => {
   // No key configured → skip the network call and degrade gracefully.
   if (!process.env.HF_API_KEY) {
     return { sentiment: "NEUTRAL", score: 0 };
   }
   try {
-    const result = await hf.textClassification({ model: SENTIMENT_MODEL, inputs: text });
+    const result = await hf.textClassification(
+      { model: SENTIMENT_MODEL, inputs: text },
+      { signal: AbortSignal.timeout(HF_TIMEOUT_MS) }
+    );
     const top = result[0];
     return { sentiment: top.label.toUpperCase(), score: parseFloat(top.score.toFixed(4)) };
   } catch (err) {
@@ -24,6 +31,7 @@ const analyzeSentiment = async (text) => {
 // ─── NVIDIA Mistral — Structured JSON summaries ──────────────────────────────
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const MISTRAL_MODEL = "mistralai/mistral-small-4-119b-2603";
+const MISTRAL_TIMEOUT_MS = 20000;
 
 /**
  * Calls NVIDIA Mistral via HTTPS and returns parsed JSON.
@@ -70,6 +78,11 @@ const callMistral = (messages) => {
       });
     });
 
+    // Fail fast instead of hanging if the upstream stalls. destroy() emits
+    // 'error', which rejects the promise; the caller falls back gracefully.
+    req.setTimeout(MISTRAL_TIMEOUT_MS, () => {
+      req.destroy(new Error(`Mistral request timed out after ${MISTRAL_TIMEOUT_MS}ms`));
+    });
     req.on("error", reject);
     req.write(body);
     req.end();

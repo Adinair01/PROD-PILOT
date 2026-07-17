@@ -41,6 +41,8 @@ const feedbackSchema = new mongoose.Schema(
 // Compound index matches the dominant query: org-scoped, sorted by recency.
 feedbackSchema.index({ organizationId: 1, createdAt: -1 });
 
-const Feedback = mongoose.model("Feedback", feedbackSchema);
+// Guards against OverwriteModelError when this module is evaluated more than
+// once (e.g. Vitest/Vite's module graph can load the same CJS file twice).
+const Feedback = mongoose.models.Feedback || mongoose.model("Feedback", feedbackSchema);
 
 module.exports = Feedback;
