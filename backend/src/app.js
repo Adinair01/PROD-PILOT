@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 
 const { env } = require("./config/env");
 const { logger } = require("./utils/logger");
+const { Sentry } = require("./config/sentry");
 
 const authRoutes = require("./routes/auth.routes");
 const inviteRoutes = require("./routes/invite.routes");
@@ -21,6 +22,14 @@ const { errorMiddleware } = require("./middlewares/error.middleware");
 
 const app = express();
 app.disable("x-powered-by");
+
+// Behind a reverse proxy / load balancer (Render, Railway, Fly, nginx, etc.),
+// trust the first hop so req.ip and secure cookies reflect the real client via
+// X-Forwarded-For. A fixed hop count (not `true`) prevents clients from spoofing
+// the header to bypass rate limiting. Disabled locally where there is no proxy.
+if (env.isProduction) {
+  app.set("trust proxy", 1);
+}
 
 /* ── Global middleware ────────────────────────────────────────────────── */
 
@@ -46,10 +55,13 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// Tighter limiter for auth + AI endpoints (expensive / abuse-prone).
+// Tighter limiter for auth + AI endpoints (expensive / abuse-prone). Relaxed
+// in tests — Supertest requests all share one in-memory bucket (no real
+// client IPs), so a full test run legitimately exceeds real-world limits
+// within the same window; the limiter's own behavior isn't what's under test.
 const strictLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 20,
+  max: env.isTest ? 10000 : 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please slow down." },
@@ -81,6 +93,11 @@ app.use("/v1/decision-engine", strictLimiter, decisionEngineRoutes);
 /* ── 404 + error handler (last) ───────────────────────────────────────── */
 
 app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
+// Reports errors to Sentry, then passes them on — placed before the app's own
+// error middleware so it sees the error first. ApiErrors carry a statusCode,
+// so Sentry's default filtering already excludes expected 4xx responses and
+// only reports genuine 5xx/unhandled errors.
+Sentry.setupExpressErrorHandler(app);
 app.use(errorMiddleware);
 
 module.exports = { app };

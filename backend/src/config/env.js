@@ -14,19 +14,25 @@ const envSchema = z.object({
   MONGO_URI: z.string().min(1, "MONGO_URI is required"),
 
   JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET must be at least 16 characters"),
-  JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET must be at least 16 characters"),
   ACCESS_TOKEN_TTL: z.string().default("15m"),
-  REFRESH_TOKEN_TTL: z.string().default("7d"),
 
   COOKIE_SECURE: z
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  FRONTEND_URL: z.string().default("http://localhost:5173"),
 
   // AI keys are optional — the app degrades gracefully without them.
   HF_API_KEY: z.string().optional(),
   NVIDIA_API_KEY: z.string().optional(),
+
+  // Email delivery (password reset) — optional, degrades to a logged no-op.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("PROD PILOT <onboarding@resend.dev>"),
+
+  // Error monitoring — optional, Sentry SDK no-ops without a DSN.
+  SENTRY_DSN: z.string().optional(),
 });
 
 function loadEnv() {
@@ -45,6 +51,7 @@ function loadEnv() {
   return {
     ...env,
     isProduction: env.NODE_ENV === "production",
+    isTest: env.NODE_ENV === "test",
     corsOrigins: env.CORS_ORIGIN.split(",")
       .map((o) => o.trim())
       .filter(Boolean),

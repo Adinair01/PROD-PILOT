@@ -19,6 +19,9 @@ const organizationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Organization = mongoose.model("Organization", organizationSchema);
+// Guards against OverwriteModelError when this module is evaluated more than
+// once (e.g. Vitest/Vite's module graph can load the same CJS file twice).
+const Organization =
+  mongoose.models.Organization || mongoose.model("Organization", organizationSchema);
 
 module.exports = Organization;

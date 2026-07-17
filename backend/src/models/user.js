@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
 // Unique email per org
 userSchema.index({ organizationId: 1, email: 1 }, { unique: true });
 
-const User = mongoose.model("User", userSchema);
+// Guards against OverwriteModelError when this module is evaluated more than
+// once (e.g. Vitest/Vite's module graph can load the same CJS file twice).
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 module.exports = { User, ROLES };

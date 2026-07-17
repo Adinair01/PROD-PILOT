@@ -1,7 +1,13 @@
-const { registerAdmin, loginUser, refreshAccessToken } = require("../services/auth.service");
+const {
+  registerAdmin,
+  loginUser,
+  refreshSession,
+  logoutUser,
+} = require("../services/auth.service");
+const { requestPasswordReset, resetPassword } = require("../services/password-reset.service");
 const { asyncHandler } = require("../utils/async-handler");
 const { ApiError } = require("../utils/api-error");
-const { setAuthCookies, setAccessCookie, clearAuthCookies } = require("../utils/cookies");
+const { setAuthCookies, clearAuthCookies } = require("../utils/cookies");
 
 const adminSignup = asyncHandler(async (req, res) => {
   const result = await registerAdmin(req.body);
@@ -21,7 +27,10 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
-const logout = asyncHandler(async (_req, res) => {
+const logout = asyncHandler(async (req, res) => {
+  // Tolerant of a missing/already-invalid cookie — logout always succeeds
+  // from the client's point of view.
+  await logoutUser(req.cookies.refreshToken);
   clearAuthCookies(res);
   res.json({ message: "Logged out successfully" });
 });
@@ -31,9 +40,35 @@ const refresh = asyncHandler(async (req, res) => {
   if (!refreshToken) {
     throw ApiError.unauthorized("Refresh token not found");
   }
-  const result = await refreshAccessToken(refreshToken);
-  setAccessCookie(res, result.accessToken);
-  res.json({ message: "Token refreshed" });
+  try {
+    const result = await refreshSession(refreshToken);
+    // Rotation issues a new refresh token too — both cookies must be reissued,
+    // or the session would be exhausted after a single refresh.
+    setAuthCookies(res, result);
+    res.json({ message: "Token refreshed" });
+  } catch (err) {
+    clearAuthCookies(res);
+    throw err;
+  }
 });
 
-module.exports = { adminSignup, login, logout, refresh };
+const forgotPassword = asyncHandler(async (req, res) => {
+  await requestPasswordReset(req.body.email);
+  // Same response regardless of whether the email matched an account, and
+  // regardless of match count — avoids leaking account existence.
+  res.json({ message: "If an account exists for that email, a reset link has been sent." });
+});
+
+const resetPasswordHandler = asyncHandler(async (req, res) => {
+  await resetPassword(req.body);
+  res.json({ message: "Password reset successful. Please sign in." });
+});
+
+module.exports = {
+  adminSignup,
+  login,
+  logout,
+  refresh,
+  forgotPassword,
+  resetPassword: resetPasswordHandler,
+};

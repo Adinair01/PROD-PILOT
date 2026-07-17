@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Hub from "./pages/Hub";
 import DecisionEngine from "./pages/DecisionEngine";
 import RoleSelector from "./pages/RoleSelector";
@@ -20,6 +22,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signin" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Authenticated */}
         <Route path="/hub" element={<ProtectedRoute><Hub /></ProtectedRoute>} />

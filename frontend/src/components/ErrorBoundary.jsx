@@ -1,4 +1,5 @@
 import { Component } from "react";
+import * as Sentry from "@sentry/react";
 
 /**
  * Catches render-time errors anywhere below it so a single component failure
@@ -12,6 +13,11 @@ export default class ErrorBoundary extends Component {
 
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    // Safe no-op if Sentry.init() never ran (no VITE_SENTRY_DSN configured).
+    Sentry.captureException(error, { extra: info });
   }
 
   handleReload = () => {
