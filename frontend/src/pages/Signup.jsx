@@ -39,10 +39,12 @@ export default function Signup() {
     }
   };
 
-  const orgNameValid = formData.orgName.trim().length >= 2;
-
   const handleGoogleSuccess = async (credentialResponse) => {
     setError("");
+    if (formData.orgName.trim().length < 2) {
+      setError("Enter an organization name above, then continue with Google.");
+      return;
+    }
     try {
       const response = await api.post("/auth/google/signup", {
         idToken: credentialResponse.credential,
@@ -111,14 +113,7 @@ export default function Signup() {
 
           <form onSubmit={handleSignup} className="auth-form">
             {error && (
-              <div style={{
-                padding: "0.75rem 1rem",
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "10px",
-                color: "#F87171",
-                fontSize: "0.875rem"
-              }}>
+              <div className="auth-banner auth-banner--error" role="alert">
                 {error}
               </div>
             )}
@@ -189,26 +184,19 @@ export default function Signup() {
             <div className="divider-line"></div>
           </div>
 
-          {googleClientId &&
-            (orgNameValid ? (
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError("Google sign-up failed. Please try again.")}
-                />
-              </div>
-            ) : (
-              <p
-                style={{
-                  textAlign: "center",
-                  fontSize: "0.8rem",
-                  color: "#94A3B8",
-                  margin: 0,
-                }}
-              >
-                Enter an organization name above to sign up with Google.
-              </p>
-            ))}
+          {googleClientId && (
+            <div className="google-btn-wrapper">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("Google sign-up failed. Please try again.")}
+                theme="filled_black"
+                shape="rectangular"
+                size="large"
+                text="continue_with"
+                width="380"
+              />
+            </div>
+          )}
 
           <div className="auth-link">
             Already have an account? <a href="/signin">Sign in</a>

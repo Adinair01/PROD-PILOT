@@ -38,10 +38,10 @@ SentimentChart.displayName = "SentimentChart";
 const RoleChart = memo(({ data }) => (
   <ResponsiveContainer width="100%" height={260}>
     <BarChart data={data} barSize={32}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-      <XAxis dataKey="name" stroke="#64748B" tick={{ fontSize: 12 }} />
-      <YAxis stroke="#64748B" tick={{ fontSize: 12 }} allowDecimals={false} />
-      <Tooltip contentStyle={{ background: "#0F172A", border: "1px solid #1E293B", borderRadius: 8 }} />
+      <CartesianGrid strokeDasharray="3 3" stroke="var(--surface)" />
+      <XAxis dataKey="name" stroke="var(--muted)" tick={{ fontSize: 12 }} />
+      <YAxis stroke="var(--muted)" tick={{ fontSize: 12 }} allowDecimals={false} />
+      <Tooltip contentStyle={{ background: "var(--bg)", border: "1px solid var(--surface)", borderRadius: 8 }} />
       <Bar dataKey="value" radius={[6, 6, 0, 0]} animationDuration={600}>
         {data.map((entry, i) => <Cell key={entry.name} fill={ROLE_COLORS[i % ROLE_COLORS.length]} />)}
       </Bar>
@@ -53,10 +53,10 @@ RoleChart.displayName = "RoleChart";
 const TimelineChart = memo(({ data }) => (
   <ResponsiveContainer width="100%" height={220}>
     <LineChart data={data}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-      <XAxis dataKey="date" stroke="#64748B" tick={{ fontSize: 11 }} />
-      <YAxis stroke="#64748B" tick={{ fontSize: 11 }} allowDecimals={false} />
-      <Tooltip contentStyle={{ background: "#0F172A", border: "1px solid #1E293B", borderRadius: 8 }} />
+      <CartesianGrid strokeDasharray="3 3" stroke="var(--surface)" />
+      <XAxis dataKey="date" stroke="var(--muted)" tick={{ fontSize: 11 }} />
+      <YAxis stroke="var(--muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
+      <Tooltip contentStyle={{ background: "var(--bg)", border: "1px solid var(--surface)", borderRadius: 8 }} />
       <Legend />
       <Line type="monotone" dataKey="feedbackCount" stroke="#6366F1" strokeWidth={2} dot={{ r: 4 }} name="Total" />
       <Line type="monotone" dataKey="negativeCount" stroke="#EF4444" strokeWidth={2} dot={{ r: 4 }} name="Negative" />

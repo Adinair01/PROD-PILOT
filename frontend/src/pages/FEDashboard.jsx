@@ -50,7 +50,7 @@ export default function FEDashboard() {
       </div>
       <p className="issue-message">{f.message}</p>
       <div className="issue-footer">
-        <span className="issue-reporter">From {getRoleDisplay(f.role)}</span>
+        <span className="issue-reporter">Reported by {getRoleDisplay(f.role)}</span>
       </div>
     </div>
   );

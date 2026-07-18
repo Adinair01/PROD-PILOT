@@ -54,6 +54,13 @@ export default function DataDashboard() {
     return (((s.POSITIVE - s.NEGATIVE) / s.total) * 100).toFixed(1);
   }, [insights]);
 
+  const sentimentHealthClass = useMemo(() => {
+    const score = Number(sentimentScore);
+    if (score > 20) return "health-good";
+    if (score >= -20) return "health-medium";
+    return "health-bad";
+  }, [sentimentScore]);
+
   if (showLoader) return <DashboardLoader />;
 
   return (
@@ -76,7 +83,7 @@ export default function DataDashboard() {
             <div className="metric-label">Total Data Points</div>
             <div className="metric-value">{feedback.length}</div>
           </div>
-          <div className="metric-card health-good">
+          <div className={`metric-card ${sentimentHealthClass}`}>
             <div className="metric-icon"><TrendingUp size={22} /></div>
             <div className="metric-label">Sentiment Score</div>
             <div className="metric-value" style={{ fontSize: "2rem" }}>{sentimentScore}%</div>
@@ -95,10 +102,10 @@ export default function DataDashboard() {
                 <h3>Feedback Volume — Last 7 Days</h3>
                 <ResponsiveContainer width="100%" height={240}>
                   <LineChart data={timelineData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                    <XAxis dataKey="date" stroke="#64748B" tick={{ fontSize: 11 }} />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ background: "#0F172A", border: "1px solid #1E293B", borderRadius: 8 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--surface)" />
+                    <XAxis dataKey="date" stroke="var(--muted)" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="var(--muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: "var(--bg)", border: "1px solid var(--surface)", borderRadius: 8 }} />
                     <Legend />
                     <Line type="monotone" dataKey="feedbackCount" stroke="#6366F1" strokeWidth={2} dot={{ r: 4 }} name="Total" />
                     <Line type="monotone" dataKey="negativeCount" stroke="#EF4444" strokeWidth={2} dot={{ r: 4 }} name="Negative" />
@@ -112,10 +119,10 @@ export default function DataDashboard() {
                 <h3>Feedback by Team</h3>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={roleData} barSize={32}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                    <XAxis dataKey="name" stroke="#64748B" tick={{ fontSize: 12 }} />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ background: "#0F172A", border: "1px solid #1E293B", borderRadius: 8 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--surface)" />
+                    <XAxis dataKey="name" stroke="var(--muted)" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="var(--muted)" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: "var(--bg)", border: "1px solid var(--surface)", borderRadius: 8 }} />
                     <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                       {roleData.map((entry, i) => <Cell key={entry.name} fill={ROLE_COLORS[i % ROLE_COLORS.length]} />)}
                     </Bar>

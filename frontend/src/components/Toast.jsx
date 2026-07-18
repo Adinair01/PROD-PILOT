@@ -19,7 +19,7 @@ export default function Toast({ message, onClose, duration = 3500, type = 'succe
 
   return (
     <div className="toast-container">
-      <div className={`toast ${isError ? 'toast--error' : ''}`}>
+      <div className={`toast ${isError ? 'toast--error' : ''}`} role={isError ? 'alert' : 'status'}>
         <div className="toast-icon">
           {isError ? <AlertTriangle size={24} /> : <CheckCircle size={24} />}
         </div>

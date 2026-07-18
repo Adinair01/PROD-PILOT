@@ -1,22 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* Tokens (--bg, --surface, --indigo, etc.) come from the global :root in
+   src/index.css, loaded before this file on every route. */
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-
-:root{
-  --bg:#060D1A;
-  --surface:rgba(15,23,42,0.75);
-  --border:rgba(255,255,255,0.07);
-  --border-hi:rgba(99,102,241,0.3);
-  --indigo:#6366F1;
-  --violet:#8B5CF6;
-  --pink:#EC4899;
-  --green:#22C55E;
-  --amber:#F59E0B;
-  --red:#EF4444;
-  --text:#F1F5F9;
-  --muted:#64748B;
-  --subtle:#94A3B8;
-}
 
 html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}

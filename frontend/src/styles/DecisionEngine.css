@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* Inter is loaded once, globally, in src/index.css. */
 
 /* ── Wrap ── */
 .de-wrap {
@@ -100,7 +100,7 @@
 .de-sidebar-title {
   display: flex; align-items: center; gap: .5rem;
   font-size: .75rem; font-weight: 700;
-  color: #475569; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--faint); letter-spacing: .06em; text-transform: uppercase;
 }
 
 .de-sidebar-actions {
@@ -114,7 +114,7 @@
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.07);
   border-radius: 6px;
-  color: #475569; cursor: pointer;
+  color: var(--faint); cursor: pointer;
   transition: color .2s, background .2s;
 }
 .de-sidebar-new:hover,
@@ -438,7 +438,17 @@
 
 /* ── Responsive ── */
 @media (max-width: 860px) {
-  .de-sidebar { display: none; }
+  /* Below tablet width the sidebar becomes an overlay instead of disappearing
+     — the History feature stays reachable via the existing expand/collapse
+     toggle rather than being hidden with no alternate access. */
+  .de-sidebar {
+    position: fixed;
+    top: 62px;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    box-shadow: 16px 0 40px rgba(0, 0, 0, .55);
+  }
   .de-metrics { grid-template-columns: repeat(2, 1fr); }
   .de-result-header { flex-wrap: wrap; }
   .de-result-badges { margin-left: 0; }

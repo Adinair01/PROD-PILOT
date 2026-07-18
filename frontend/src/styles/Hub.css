@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* Inter is loaded once, globally, in src/index.css. */
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -164,7 +164,7 @@
 
 .hub-sub {
   font-size: .95rem;
-  color: #475569;
+  color: var(--subtle);
   line-height: 1.7;
 }
 
@@ -344,7 +344,7 @@
 /* ── Description ── */
 .hub-card-desc {
   font-size: .825rem;
-  color: #475569;
+  color: var(--subtle);
   line-height: 1.75;
   position: relative;
   z-index: 1;
@@ -426,7 +426,7 @@
 .hub-footnote {
   margin-top: 2rem;
   font-size: .72rem;
-  color: #1E293B;
+  color: var(--faint);
   text-align: center;
   letter-spacing: .02em;
 }
