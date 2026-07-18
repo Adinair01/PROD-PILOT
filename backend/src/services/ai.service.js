@@ -33,6 +33,16 @@ const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const MISTRAL_MODEL = "mistralai/mistral-small-4-119b-2603";
 const MISTRAL_TIMEOUT_MS = 20000;
 
+// Despite response_format: json_object and an explicit "no markdown" system
+// prompt, Mistral sometimes still wraps its output in a ```json ... ``` code
+// fence. Strip it before parsing; falls through to the original text
+// unchanged if there's no fence, so this is a no-op for well-behaved responses.
+function stripMarkdownFence(text) {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return match ? match[1] : trimmed;
+}
+
 /**
  * Calls NVIDIA Mistral via HTTPS and returns parsed JSON.
  * Forces JSON output via system prompt + response_format.
@@ -71,7 +81,7 @@ const callMistral = (messages) => {
           const parsed = JSON.parse(data);
           const content = parsed?.choices?.[0]?.message?.content;
           if (!content) return reject(new Error("Empty Mistral response"));
-          resolve(JSON.parse(content));
+          resolve(JSON.parse(stripMarkdownFence(content)));
         } catch (e) {
           reject(new Error("Failed to parse Mistral JSON: " + e.message));
         }
