@@ -1,6 +1,7 @@
 const Feedback = require("../models/feedback.model");
 const mongoose = require("mongoose");
 const { callMistral } = require("./ai.service");
+const { logger } = require("../utils/logger");
 
 /**
  * Fetches a compact snapshot of the org's feedback context.
@@ -91,12 +92,18 @@ ${problemSummary}
 
 ${additionalContext ? `ADDITIONAL CONTEXT FROM PM:\n${additionalContext}\n\n` : ""}${feedbackBlock}`;
 
-  const result = await callMistral([
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ]);
-
-  return result;
+  try {
+    return await callMistral([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ]);
+  } catch (err) {
+    // Caller (controller) treats a falsy return as "AI unavailable" and
+    // responds with a clean 502 — matches the same fail-soft convention as
+    // ai.service.js's generateStructuredInsights.
+    logger.warn({ err: err.message }, "[AI] Decision engine Mistral call failed, no insight generated");
+    return null;
+  }
 };
 
 module.exports = { generateDecisionInsight, getOrgFeedbackContext };
