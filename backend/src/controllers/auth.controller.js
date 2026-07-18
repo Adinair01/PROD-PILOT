@@ -3,6 +3,8 @@ const {
   loginUser,
   refreshSession,
   logoutUser,
+  googleSignup: googleSignupService,
+  googleLogin: googleLoginService,
 } = require("../services/auth.service");
 const { requestPasswordReset, resetPassword } = require("../services/password-reset.service");
 const { asyncHandler } = require("../utils/async-handler");
@@ -64,6 +66,24 @@ const resetPasswordHandler = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset successful. Please sign in." });
 });
 
+const googleSignup = asyncHandler(async (req, res) => {
+  const result = await googleSignupService(req.body);
+  setAuthCookies(res, result);
+  res.status(201).json({
+    message: "Organization created. Admin registered.",
+    data: { user: result.user, organization: result.organization },
+  });
+});
+
+const googleLogin = asyncHandler(async (req, res) => {
+  const result = await googleLoginService(req.body);
+  setAuthCookies(res, result);
+  res.json({
+    message: "Login successful",
+    data: { user: result.user, organization: result.organization },
+  });
+});
+
 module.exports = {
   adminSignup,
   login,
@@ -71,4 +91,6 @@ module.exports = {
   refresh,
   forgotPassword,
   resetPassword: resetPasswordHandler,
+  googleSignup,
+  googleLogin,
 };

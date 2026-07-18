@@ -6,6 +6,8 @@ const {
   refresh,
   forgotPassword,
   resetPassword,
+  googleSignup,
+  googleLogin,
 } = require("../controllers/auth.controller");
 const { validate } = require("../middlewares/validate.middleware");
 const {
@@ -13,6 +15,8 @@ const {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  googleSignupSchema,
+  googleLoginSchema,
 } = require("../validators/auth.validators");
 
 router.post("/admin/signup", validate({ body: adminSignupSchema }), adminSignup);
@@ -21,5 +25,7 @@ router.post("/logout", logout);
 router.post("/refresh", refresh);
 router.post("/forgot-password", validate({ body: forgotPasswordSchema }), forgotPassword);
 router.post("/reset-password", validate({ body: resetPasswordSchema }), resetPassword);
+router.post("/google/signup", validate({ body: googleSignupSchema }), googleSignup);
+router.post("/google/login", validate({ body: googleLoginSchema }), googleLogin);
 
 module.exports = router;

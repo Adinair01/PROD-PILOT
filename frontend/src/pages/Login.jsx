@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import { Target, BarChart2, Zap } from "lucide-react";
 import { storeSession } from "../utils/auth";
 import "../styles/Auth.css";
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,6 +27,19 @@ export default function Login() {
       setError(err.response?.data?.error || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    try {
+      const response = await api.post("/auth/google/login", {
+        idToken: credentialResponse.credential,
+      });
+      storeSession(response.data.data);
+      navigate("/hub");
+    } catch (err) {
+      setError(err.response?.data?.error || "Google sign-in failed. Please try again.");
     }
   };
 
@@ -134,6 +150,15 @@ export default function Login() {
             <span className="divider-text">or</span>
             <div className="divider-line"></div>
           </div>
+
+          {googleClientId && (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("Google sign-in failed. Please try again.")}
+              />
+            </div>
+          )}
 
           <div className="auth-link">
             Don&apos;t have an account?{" "}

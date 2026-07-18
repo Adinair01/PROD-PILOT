@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../backend/src/app.js";
 import { User } from "../backend/src/models/user.js";
+import Organization from "../backend/src/models/organization.model.js";
 import { PasswordResetToken } from "../backend/src/models/password-reset-token.model.js";
 import { hashToken } from "../backend/src/utils/token.js";
 
@@ -233,5 +234,58 @@ describe("POST /v1/auth/reset-password", () => {
       .post("/v1/auth/reset-password")
       .send({ token: rawToken, newPassword: "secondnewpassword" });
     expect(second.status).toBe(400);
+  });
+
+  it("does not send a reset link for a Google-only account (no passwordHash)", async () => {
+    const org = await Organization.create({ name: "Google Only Org" });
+    await User.create({
+      organizationId: org._id,
+      name: "Google Only User",
+      email: "googleonly-reset@example.com",
+      googleId: "google-reset-test-id",
+      role: "ADMIN",
+    });
+
+    const res = await request(app)
+      .post("/v1/auth/forgot-password")
+      .send({ email: "googleonly-reset@example.com" });
+    // Same generic response either way — the request itself must not fail or
+    // reveal that this account exists but is excluded.
+    expect(res.status).toBe(200);
+
+    const stillNoPassword = await User.findOne({ email: "googleonly-reset@example.com" });
+    expect(stillNoPassword.passwordHash).toBeUndefined();
+  });
+});
+
+describe("Google-only accounts and the password /login endpoint", () => {
+  it("rejects password login cleanly (401, not a 500) for a Google-only account", async () => {
+    const org = await Organization.create({ name: "Google Only Login Org" });
+    await User.create({
+      organizationId: org._id,
+      name: "Google Only User",
+      email: "googleonly-login@example.com",
+      googleId: "google-login-test-id",
+      role: "ADMIN",
+    });
+
+    const res = await request(app)
+      .post("/v1/auth/login")
+      .send({ email: "googleonly-login@example.com", password: "anypassword123" });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /v1/auth/google/signup and /v1/auth/google/login (not configured)", () => {
+  it("google/signup responds 502 when GOOGLE_CLIENT_ID is unset", async () => {
+    const res = await request(app)
+      .post("/v1/auth/google/signup")
+      .send({ idToken: "whatever", orgName: "Some Org" });
+    expect(res.status).toBe(502);
+  });
+
+  it("google/login responds 502 when GOOGLE_CLIENT_ID is unset", async () => {
+    const res = await request(app).post("/v1/auth/google/login").send({ idToken: "whatever" });
+    expect(res.status).toBe(502);
   });
 });

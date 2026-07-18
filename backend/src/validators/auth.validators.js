@@ -22,4 +22,20 @@ const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters").max(128),
 });
 
-module.exports = { adminSignupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema };
+const googleSignupSchema = z.object({
+  idToken: z.string().min(1, "Google credential is required"),
+  orgName: z.string().trim().min(2, "Organization name must be at least 2 characters").max(120),
+});
+
+const googleLoginSchema = z.object({
+  idToken: z.string().min(1, "Google credential is required"),
+});
+
+module.exports = {
+  adminSignupSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  googleSignupSchema,
+  googleLoginSchema,
+};

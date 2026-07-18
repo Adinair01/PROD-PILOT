@@ -3,6 +3,7 @@ const { User } = require("../models/user");
 const { hashPassword, verifyPassword } = require("../utils/hash");
 const { signAccessToken } = require("../utils/jwt");
 const { createSession, rotateSession, revokeSession } = require("./session.service");
+const { verifyGoogleIdToken } = require("../utils/google-auth");
 const { ApiError } = require("../utils/api-error");
 
 const toPublicUser = (user) => ({
@@ -49,8 +50,10 @@ const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email }).populate("organizationId");
 
   // Run the password check even when the user is missing to avoid leaking
-  // which emails exist via response timing.
-  const isValid = user
+  // which emails exist via response timing. Also guards Google-only accounts
+  // (no passwordHash) — falls through to the dummy-hash compare instead of
+  // passing undefined to bcrypt, which would throw.
+  const isValid = user?.passwordHash
     ? await verifyPassword(password, user.passwordHash)
     : await verifyPassword(password, "$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinv");
 
@@ -99,9 +102,82 @@ const logoutUser = async (refreshToken) => {
   await revokeSession(refreshToken);
 };
 
+const googleSignup = async ({ idToken, orgName }) => {
+  const { googleId, email, name } = await verifyGoogleIdToken(idToken);
+
+  // Checked before touching Organization at all — googleId is globally
+  // unique (unlike {organizationId, email}, which can't collide for a
+  // brand-new org), so a repeat signup by an already-registered identity
+  // would otherwise create-then-abandon an Organization document when
+  // User.create fails on the duplicate-key error.
+  const existingUser = await User.findOne({ googleId });
+  if (existingUser) {
+    throw ApiError.conflict(
+      "An account already exists for this Google identity. Please sign in instead."
+    );
+  }
+
+  const existingOrg = await Organization.findOne({ name: orgName });
+  if (existingOrg) {
+    throw ApiError.conflict("Organization already exists");
+  }
+
+  const organization = await Organization.create({ name: orgName });
+  const adminUser = await User.create({
+    name,
+    email,
+    googleId,
+    role: "ADMIN",
+    organizationId: organization._id,
+  });
+
+  const accessToken = signAccessToken({
+    userId: adminUser._id,
+    orgId: organization._id,
+    role: adminUser.role,
+  });
+  const refreshToken = await createSession(adminUser._id);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: toPublicUser(adminUser),
+    organization: { _id: organization._id, name: organization.name },
+  };
+};
+
+const googleLogin = async ({ idToken }) => {
+  const { googleId } = await verifyGoogleIdToken(idToken);
+
+  // Matched by googleId ONLY, never by email — an email lookup here would
+  // hit the same multi-org ambiguity loginUser already has for password
+  // auth, plus silently merge a Google identity onto a password account with
+  // no confirmation step. Out of scope this pass.
+  const user = await User.findOne({ googleId }).populate("organizationId");
+  if (!user) {
+    throw ApiError.unauthorized("No account found for this Google identity");
+  }
+
+  const accessToken = signAccessToken({
+    userId: user._id,
+    orgId: user.organizationId._id,
+    role: user.role,
+  });
+  const refreshToken = await createSession(user._id);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: toPublicUser(user),
+    organization: { _id: user.organizationId._id, name: user.organizationId.name },
+  };
+};
+
 module.exports = {
   registerAdmin,
   loginUser,
   refreshSession,
   logoutUser,
+  googleSignup,
+  googleLogin,
 };
