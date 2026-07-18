@@ -54,31 +54,13 @@ export default function ResetPassword() {
           </div>
 
           {!token && (
-            <div
-              style={{
-                padding: "0.75rem 1rem",
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "10px",
-                color: "#F87171",
-                fontSize: "0.875rem",
-              }}
-            >
+            <div className="auth-banner auth-banner--error" role="alert">
               This reset link is missing its token. Request a new one.
             </div>
           )}
 
           {error && (
-            <div
-              style={{
-                padding: "0.75rem 1rem",
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "10px",
-                color: "#F87171",
-                fontSize: "0.875rem",
-              }}
-            >
+            <div className="auth-banner auth-banner--error" role="alert">
               {error}
             </div>
           )}

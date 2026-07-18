@@ -43,16 +43,7 @@ export default function ForgotPassword() {
           </div>
 
           {submitted ? (
-            <div
-              style={{
-                padding: "0.75rem 1rem",
-                background: "rgba(99,102,241,0.1)",
-                border: "1px solid rgba(99,102,241,0.3)",
-                borderRadius: "10px",
-                color: "#A5B4FC",
-                fontSize: "0.875rem",
-              }}
-            >
+            <div className="auth-banner auth-banner--info" role="status">
               If an account exists for that email, a reset link has been sent. Check your inbox.
             </div>
           ) : (

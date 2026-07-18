@@ -1,4 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #060D1A;
+  --surface: rgba(15, 23, 42, 0.75);
+  --surface-soft: rgba(15, 23, 42, 0.5);
+  --surface-sunken: rgba(12, 20, 38, 0.9);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hi: rgba(99, 102, 241, 0.3);
+  --indigo: #6366F1;
+  --violet: #8B5CF6;
+  --pink: #EC4899;
+  --green: #22C55E;
+  --amber: #F59E0B;
+  --red: #EF4444;
+  --indigo-light: #818CF8;
+  --violet-light: #A78BFA;
+  --pink-light: #F472B6;
+  --grad-brand: linear-gradient(135deg, var(--indigo-light) 0%, var(--violet-light) 50%, var(--pink-light) 100%);
+  --text: #F1F5F9;
+  --text-body: #E2E8F0;
+  --subtle: #94A3B8;
+  --muted: #8896AD;
+  --faint: #7C8AA5;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+}
 
 * {
   margin: 0;
@@ -20,13 +49,26 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #0F172A;
-  color: #E2E8F0;
+  background: var(--bg);
+  color: var(--text-body);
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Keyboard focus — one shared ring for every interactive element that
+   doesn't already define its own :focus style (form inputs/textareas keep
+   their existing higher-specificity glow). */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* Scrollbar Styling */
@@ -36,20 +78,20 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1E293B;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: var(--faint);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: var(--muted);
 }
 
 /* Selection */
 ::selection {
   background: rgba(99, 102, 241, 0.3);
-  color: #E2E8F0;
+  color: var(--text-body);
 }

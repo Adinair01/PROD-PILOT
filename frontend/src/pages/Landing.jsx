@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Brain, Layers, BarChart3, MessageSquare, Users, Zap,
   TrendingUp, ShieldCheck, Clock, Target, ArrowRight,
@@ -9,7 +9,6 @@ import "../styles/Landing.css";
 
 /* ── Navbar ─────────────────────────────────────────────────────────────── */
 function Navbar() {
-  const navigate = useNavigate();
   return (
     <nav className="lp-nav">
       <div className="lp-nav-logo">PROD PILOT</div>
@@ -19,15 +18,13 @@ function Navbar() {
         <li><a href="#benefits">Benefits</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
-      <a className="lp-nav-cta" onClick={() => navigate("/signin")}>Sign In</a>
+      <Link className="lp-nav-cta" to="/signin">Sign In</Link>
     </nav>
   );
 }
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */
 function Hero() {
-  const navigate = useNavigate();
-
   const bars = [
     { label: "QA Team",   pct: 78, color: "#EF4444" },
     { label: "Frontend",  pct: 55, color: "#8B5CF6" },
@@ -63,9 +60,9 @@ function Hero() {
               by severity, and hands your PM a prioritized action plan — automatically.
             </p>
             <div className="lp-hero-actions">
-              <a className="lp-btn-primary" onClick={() => navigate("/signup")}>
+              <Link className="lp-btn-primary" to="/signup">
                 Get Started <ArrowRight size={15} />
-              </a>
+              </Link>
               <a className="lp-btn-ghost" href="#how-it-works">
                 See How It Works <ChevronRight size={15} />
               </a>
@@ -364,7 +361,6 @@ function Benefits() {
 
 /* ── CTA ─────────────────────────────────────────────────────────────────── */
 function CTA() {
-  const navigate = useNavigate();
   return (
     <section className="lp-cta">
       <div className="lp-cta-glow" />
@@ -374,13 +370,13 @@ function CTA() {
           and start <span className="lp-gradient-text">deciding</span>?
         </h2>
         <p>Set up your organization in under 2 minutes. No credit card required.</p>
-        <a
+        <Link
           className="lp-btn-primary"
-          onClick={() => navigate("/signup")}
+          to="/signup"
           style={{ display: "inline-flex" }}
         >
           Start Using PROD PILOT <ArrowRight size={15} />
-        </a>
+        </Link>
       </div>
     </section>
   );

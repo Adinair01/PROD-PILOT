@@ -50,7 +50,7 @@ export default function BEDashboard() {
         <span className="issue-date">{new Date(f.createdAt).toLocaleString()}</span>
       </div>
       <p className="issue-message">{f.message}</p>
-      <div className="issue-footer"><span className="issue-reporter">From {getRoleDisplay(f.role)}</span></div>
+      <div className="issue-footer"><span className="issue-reporter">Reported by {getRoleDisplay(f.role)}</span></div>
     </div>
   ));
 

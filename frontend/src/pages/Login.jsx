@@ -99,14 +99,7 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="auth-form">
             {error && (
-              <div style={{
-                padding: "0.75rem 1rem",
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "10px",
-                color: "#F87171",
-                fontSize: "0.875rem"
-              }}>
+              <div className="auth-banner auth-banner--error" role="alert">
                 {error}
               </div>
             )}
@@ -152,10 +145,15 @@ export default function Login() {
           </div>
 
           {googleClientId && (
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div className="google-btn-wrapper">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError("Google sign-in failed. Please try again.")}
+                theme="filled_black"
+                shape="rectangular"
+                size="large"
+                text="continue_with"
+                width="380"
               />
             </div>
           )}

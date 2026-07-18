@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Inter is loaded once, globally, in src/index.css. */
 
 * {
   margin: 0;
@@ -262,6 +262,42 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* ─── Status banners (errors, confirmations) ─── */
+.auth-banner {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.auth-banner--error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #F87171;
+}
+
+.auth-banner--info {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #A5B4FC;
+}
+
+/* ─── Google Sign-In ───
+   The rendered button itself is Google's own branded widget (their identity
+   platform requires it to keep a recognized, unmodified look), so its colors
+   can't be fully replaced — theme="filled_black" + shape="rectangular" below
+   is the closest official fit to this dark, softly-rounded UI. This wrapper
+   just gives it the same centered placement and hover-lift feel as .auth-btn
+   so it reads as part of the form rather than a bolted-on widget. */
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.google-btn-wrapper:hover {
+  transform: translateY(-2px);
 }
 
 /* ─── Divider ─── */

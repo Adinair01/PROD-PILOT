@@ -12,28 +12,28 @@ export default function DashboardNav({ roleLabel, roleClass = "", RoleIcon }) {
   const org = getOrganization();
 
   return (
-    <nav className="navbar">
-      <div className="nav-left">
-        <h1 className="logo">PROD PILOT</h1>
+    <nav className="dash-navbar">
+      <div className="dash-nav-left">
+        <h1 className="dash-logo">PROD PILOT</h1>
         {org && (
-          <span className="org-badge">
+          <span className="dash-org-badge">
             <Building2 size={14} />
             {org.name}
           </span>
         )}
         {roleLabel && (
-          <span className={`role-badge ${roleClass}`}>
+          <span className={`dash-role-badge ${roleClass}`}>
             {RoleIcon && <RoleIcon size={14} />}
             {roleLabel}
           </span>
         )}
       </div>
-      <div className="nav-right">
-        <button onClick={() => navigate("/dashboard")} className="back-btn">
+      <div className="dash-nav-right">
+        <button onClick={() => navigate("/dashboard")} className="dash-back-btn">
           <ArrowLeft size={16} />
           <span>Switch Role</span>
         </button>
-        <button onClick={() => logout(navigate)} className="logout-btn">
+        <button onClick={() => logout(navigate)} className="dash-logout-btn">
           <LogOut size={16} />
           <span>Logout</span>
         </button>
