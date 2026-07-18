@@ -33,6 +33,9 @@ const envSchema = z.object({
 
   // Error monitoring — optional, Sentry SDK no-ops without a DSN.
   SENTRY_DSN: z.string().optional(),
+
+  // Google Sign-In — optional, unset routes respond 502 instead of crashing.
+  GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 function loadEnv() {

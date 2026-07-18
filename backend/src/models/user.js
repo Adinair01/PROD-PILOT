@@ -17,7 +17,10 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    passwordHash: { type: String, required: true },
+    // A user has EITHER passwordHash (password auth) OR googleId (Google
+    // auth) set — not both in this pass, no account-linking feature yet.
+    passwordHash: { type: String },
+    googleId: { type: String, unique: true, sparse: true },
     role: { type: String, enum: ROLES, required: true },
   },
   { timestamps: true }

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import { Zap, ShieldCheck, Lightbulb } from "lucide-react";
 import { storeSession } from "../utils/auth";
 import "../styles/Auth.css";
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -33,6 +36,22 @@ export default function Signup() {
       setError(err.response?.data?.error || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const orgNameValid = formData.orgName.trim().length >= 2;
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    try {
+      const response = await api.post("/auth/google/signup", {
+        idToken: credentialResponse.credential,
+        orgName: formData.orgName,
+      });
+      storeSession(response.data.data);
+      navigate("/hub");
+    } catch (err) {
+      setError(err.response?.data?.error || "Google sign-up failed. Please try again.");
     }
   };
 
@@ -169,6 +188,27 @@ export default function Signup() {
             <span className="divider-text">or</span>
             <div className="divider-line"></div>
           </div>
+
+          {googleClientId &&
+            (orgNameValid ? (
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError("Google sign-up failed. Please try again.")}
+                />
+              </div>
+            ) : (
+              <p
+                style={{
+                  textAlign: "center",
+                  fontSize: "0.8rem",
+                  color: "#94A3B8",
+                  margin: 0,
+                }}
+              >
+                Enter an organization name above to sign up with Google.
+              </p>
+            ))}
 
           <div className="auth-link">
             Already have an account? <a href="/signin">Sign in</a>

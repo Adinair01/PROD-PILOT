@@ -14,7 +14,12 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // ~1h, intentionally hardcoded
 // is unique per-org, not globally), so there's no result here that could
 // tempt a caller into branching on whether a match existed.
 async function requestPasswordReset(email) {
-  const users = await User.find({ email }).populate("organizationId");
+  // Excludes Google-only accounts (no passwordHash) — password reset must
+  // not silently give a Google-authenticated account a password, which would
+  // undermine keeping the two credential types separate.
+  const users = await User.find({ email, passwordHash: { $exists: true } }).populate(
+    "organizationId"
+  );
   if (users.length === 0) return;
 
   const accounts = [];
