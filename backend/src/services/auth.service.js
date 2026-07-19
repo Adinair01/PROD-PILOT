@@ -147,13 +147,23 @@ const googleSignup = async ({ idToken, orgName }) => {
 };
 
 const googleLogin = async ({ idToken }) => {
-  const { googleId } = await verifyGoogleIdToken(idToken);
+  const { googleId, email } = await verifyGoogleIdToken(idToken);
 
-  // Matched by googleId ONLY, never by email — an email lookup here would
-  // hit the same multi-org ambiguity loginUser already has for password
-  // auth, plus silently merge a Google identity onto a password account with
-  // no confirmation step. Out of scope this pass.
-  const user = await User.findOne({ googleId }).populate("organizationId");
+  let user = await User.findOne({ googleId }).populate("organizationId");
+
+  // Fall back to linking an existing password account by email. Safe to do
+  // silently because Google already verified the caller owns this email
+  // (email_verified checked in verifyGoogleIdToken) — same trust level as a
+  // password reset link. Same multi-org ambiguity as loginUser's email
+  // lookup if the address exists in more than one org; accepted there too.
+  if (!user) {
+    user = await User.findOne({ email, googleId: { $exists: false } }).populate("organizationId");
+    if (user) {
+      user.googleId = googleId;
+      await user.save();
+    }
+  }
+
   if (!user) {
     throw ApiError.unauthorized("No account found for this Google identity");
   }
