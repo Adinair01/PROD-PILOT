@@ -8,7 +8,9 @@ const {
   resetPassword,
   googleSignup,
   googleLogin,
+  deleteAccount,
 } = require("../controllers/auth.controller");
+const { requireAuth } = require("../middlewares/auth.middleware");
 const { validate } = require("../middlewares/validate.middleware");
 const {
   adminSignupSchema,
@@ -27,5 +29,6 @@ router.post("/forgot-password", validate({ body: forgotPasswordSchema }), forgot
 router.post("/reset-password", validate({ body: resetPasswordSchema }), resetPassword);
 router.post("/google/signup", validate({ body: googleSignupSchema }), googleSignup);
 router.post("/google/login", validate({ body: googleLoginSchema }), googleLogin);
+router.delete("/account", requireAuth, deleteAccount);
 
 module.exports = router;
