@@ -77,6 +77,18 @@ const callMistral = (messages) => {
         data += chunk;
       });
       res.on("end", () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          const upstreamMessage = (() => {
+            try {
+              return JSON.parse(data)?.error?.message || data.slice(0, 300);
+            } catch {
+              return data.slice(0, 300);
+            }
+          })();
+          return reject(
+            new Error(`NVIDIA API responded ${res.statusCode}: ${upstreamMessage}`)
+          );
+        }
         try {
           const parsed = JSON.parse(data);
           const content = parsed?.choices?.[0]?.message?.content;
