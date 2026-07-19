@@ -1,5 +1,9 @@
 const Organization = require("../models/organization.model");
 const { User } = require("../models/user");
+const Feedback = require("../models/feedback.model");
+const DecisionHistory = require("../models/decision-history.model");
+const { RefreshToken } = require("../models/refresh-token.model");
+const { PasswordResetToken } = require("../models/password-reset-token.model");
 const { hashPassword, verifyPassword } = require("../utils/hash");
 const { signAccessToken } = require("../utils/jwt");
 const { createSession, rotateSession, revokeSession } = require("./session.service");
@@ -183,6 +187,34 @@ const googleLogin = async ({ idToken }) => {
   };
 };
 
+/**
+ * Deletes the requesting user's own account. If they're the last user in
+ * their org, the whole org (and its org-scoped data — feedback, decision
+ * history) is torn down too; otherwise only their own user record and
+ * sessions are removed, leaving shared org data for remaining teammates.
+ */
+const deleteAccount = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw ApiError.notFound("Account not found");
+  }
+
+  const remainingInOrg = await User.countDocuments({
+    organizationId: user.organizationId,
+    _id: { $ne: user._id },
+  });
+
+  await User.deleteOne({ _id: user._id });
+  await RefreshToken.deleteMany({ userId: user._id });
+  await PasswordResetToken.deleteMany({ userId: user._id });
+
+  if (remainingInOrg === 0) {
+    await Organization.deleteOne({ _id: user.organizationId });
+    await Feedback.deleteMany({ organizationId: user.organizationId });
+    await DecisionHistory.deleteMany({ organizationId: user.organizationId });
+  }
+};
+
 module.exports = {
   registerAdmin,
   loginUser,
@@ -190,4 +222,5 @@ module.exports = {
   logoutUser,
   googleSignup,
   googleLogin,
+  deleteAccount,
 };

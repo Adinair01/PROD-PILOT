@@ -5,6 +5,7 @@ const {
   logoutUser,
   googleSignup: googleSignupService,
   googleLogin: googleLoginService,
+  deleteAccount: deleteAccountService,
 } = require("../services/auth.service");
 const { requestPasswordReset, resetPassword } = require("../services/password-reset.service");
 const { asyncHandler } = require("../utils/async-handler");
@@ -84,6 +85,12 @@ const googleLogin = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteAccount = asyncHandler(async (req, res) => {
+  await deleteAccountService(req.user.userId);
+  clearAuthCookies(res);
+  res.json({ message: "Account deleted" });
+});
+
 module.exports = {
   adminSignup,
   login,
@@ -93,4 +100,5 @@ module.exports = {
   resetPassword: resetPasswordHandler,
   googleSignup,
   googleLogin,
+  deleteAccount,
 };
