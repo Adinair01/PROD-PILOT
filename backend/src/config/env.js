@@ -53,6 +53,39 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
+/**
+ * Variables the app no longer reads, mapped to what actually controls that
+ * behavior. These are worse than useless: `JWT_SECRET` sitting in a dashboard
+ * reads like *the* signing key, so a reasonable person could rotate it, see
+ * nothing change, and conclude the deploy is broken. Tokens are signed with
+ * JWT_ACCESS_SECRET.
+ */
+const RETIRED_VARS = {
+  JWT_SECRET: "tokens are signed with JWT_ACCESS_SECRET",
+  JWT_EXPIRES_IN: "the access-token lifetime is ACCESS_TOKEN_TTL",
+};
+
+// Set by the platform or tooling, never by us — not worth reporting as strays.
+const PLATFORM_VARS = new Set(["NODE_VERSION", "NODE_OPTIONS", "NODE_PATH"]);
+
+/**
+ * Flags env vars that were plainly *meant* for this app — they share a prefix
+ * with something in the schema — but that nothing reads. Catches typos
+ * (`CORS_ORIGINS`, `COOKIE_SAMESITE_`) and leftovers from earlier designs,
+ * both of which otherwise fail silently by simply having no effect.
+ */
+function findStrayVars(processEnv, schemaKeys) {
+  const known = new Set(schemaKeys);
+  const prefixes = new Set(
+    schemaKeys.map((k) => k.split("_")[0]).filter((p) => p !== "NODE" && p !== "PORT")
+  );
+
+  return Object.keys(processEnv)
+    .filter((k) => !known.has(k) && !PLATFORM_VARS.has(k) && !(k in RETIRED_VARS))
+    .filter((k) => prefixes.has(k.split("_")[0]))
+    .sort();
+}
+
 function loadEnv() {
   const parsed = envSchema.safeParse(process.env);
 
@@ -65,6 +98,23 @@ function loadEnv() {
   }
 
   const env = parsed.data;
+
+  // Warn, never exit: a stale variable is a config smell, not a reason to take
+  // the service down. Silence during tests, which set their own env.
+  if (env.NODE_ENV !== "test") {
+    for (const [name, guidance] of Object.entries(RETIRED_VARS)) {
+      if (process.env[name] !== undefined) {
+        console.warn(`[env] ${name} is set but nothing reads it — ${guidance}. Safe to delete.`);
+      }
+    }
+    const strays = findStrayVars(process.env, Object.keys(envSchema.shape));
+    if (strays.length) {
+      console.warn(
+        `[env] set but unread, check for a typo: ${strays.join(", ")}. ` +
+          `Recognized: ${Object.keys(envSchema.shape).join(", ")}`
+      );
+    }
+  }
 
   return {
     ...env,
@@ -81,4 +131,4 @@ const env = loadEnv();
 // Refresh-token cookies are only sent to the refresh endpoint to limit exposure.
 const REFRESH_COOKIE_PATH = "/v1/auth/refresh";
 
-module.exports = { env, REFRESH_COOKIE_PATH };
+module.exports = { env, REFRESH_COOKIE_PATH, findStrayVars, RETIRED_VARS };

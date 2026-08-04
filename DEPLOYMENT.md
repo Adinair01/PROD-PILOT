@@ -57,7 +57,7 @@ service for you.
    | `FRONTEND_URL` | same frontend URL — used to build password-reset links |
    | `HF_API_KEY` | optional |
    | `NVIDIA_API_KEY` | optional |
-   | `RESEND_API_KEY` / `EMAIL_FROM` | optional — unset, password reset silently skips sending email |
+   | `RESEND_API_KEY` / `EMAIL_FROM` | optional — but see the warning below: a key **without** `EMAIL_FROM` still fails to deliver |
    | `SENTRY_DSN` | optional — unset, no error monitoring |
 3. Deploy. When live, note the API URL, e.g. `https://prodpilot-api.onrender.com`.
 4. Verify:
@@ -190,12 +190,29 @@ the API subdomain and leave `TRUST_PROXY_HOPS=1`.
 | `ACCESS_TOKEN_TTL` | `15m` |
 | `COOKIE_SAMESITE` | unset → `none` in production. Set to `lax` once `/v1` is proxied |
 | `HF_API_KEY` / `NVIDIA_API_KEY` | unset → AI features degrade gracefully |
-| `RESEND_API_KEY` / `EMAIL_FROM` | unset → password reset returns its normal response but sends no email |
+| `RESEND_API_KEY` / `EMAIL_FROM` | unset → password reset returns its normal response but sends no email. **Setting only the key is a trap** — see below |
 | `SENTRY_DSN` | unset → no error monitoring, everything else unaffected |
 
 The API **validates all of this at boot** (`backend/src/config/env.js`) and
 exits with a readable error if anything required is missing or malformed — so a
-misconfigured deploy fails fast and loudly instead of at request time.
+misconfigured deploy fails fast and loudly instead of at request time. It also
+logs a `[env]` warning for variables that are set but unread (a typo like
+`CORS_ORIGINS`, or a leftover like `JWT_SECRET`), since those otherwise fail
+silently by simply having no effect. Worth a glance in the deploy log.
+
+### ⚠️ Password-reset email needs a verified domain
+
+Setting `RESEND_API_KEY` alone is **not enough**. Without `EMAIL_FROM`, the app
+falls back to `onboarding@resend.dev` — Resend's shared test sender, which only
+delivers to the email address that owns the Resend account. Every other user
+gets the normal "check your inbox" response and no email, because the reset flow
+deliberately returns an identical response either way so the endpoint can't be
+used to discover which addresses have accounts.
+
+To actually deliver: verify your domain in Resend, then set
+`EMAIL_FROM="PROD PILOT <noreply@yourdomain.com>"`. The rejection is logged
+(`[Email] Resend rejected the password reset email`), so check the Render logs
+after a test reset rather than trusting the UI response.
 
 **Frontend (Vercel/Netlify)**
 
