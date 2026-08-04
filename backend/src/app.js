@@ -24,11 +24,13 @@ const app = express();
 app.disable("x-powered-by");
 
 // Behind a reverse proxy / load balancer (Render, Railway, Fly, nginx, etc.),
-// trust the first hop so req.ip and secure cookies reflect the real client via
-// X-Forwarded-For. A fixed hop count (not `true`) prevents clients from spoofing
-// the header to bypass rate limiting. Disabled locally where there is no proxy.
+// trust exactly TRUST_PROXY_HOPS hops so req.ip and secure cookies reflect the
+// real client via X-Forwarded-For. A fixed hop count (not `true`) prevents
+// clients from spoofing the header to bypass rate limiting; the count must
+// match the real chain, so it grows to 2 when Vercel also proxies the API.
+// Disabled locally where there is no proxy.
 if (env.isProduction) {
-  app.set("trust proxy", 1);
+  app.set("trust proxy", env.TRUST_PROXY_HOPS);
 }
 
 /* ── Global middleware ────────────────────────────────────────────────── */

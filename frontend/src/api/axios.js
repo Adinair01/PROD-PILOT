@@ -1,8 +1,15 @@
 import axios from "axios";
 
-// API base URL is configurable per environment (see .env.example). Falls back
-// to the local backend so `npm run dev` works with zero configuration.
-const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/v1";
+// The API is reached same-origin through a proxy: `/v1/*` is forwarded to the
+// backend by the dev server (vite.config.js) locally and by the host's rewrite
+// rules in production (frontend/vercel.json, netlify.toml). This keeps the auth
+// cookies FIRST-PARTY. Talking to the backend's own domain directly makes them
+// third-party cookies, which Safari blocks by default and Chrome is phasing
+// out — users get silently signed out no matter how correct the token logic is.
+//
+// VITE_API_URL stays as an escape hatch for pointing a build at some other
+// backend; leave it unset in normal deployments so the proxy is used.
+const baseURL = import.meta.env.VITE_API_URL || "/v1";
 
 export const api = axios.create({
   baseURL,

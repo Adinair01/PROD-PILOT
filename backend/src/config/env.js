@@ -20,6 +20,21 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
+
+  // Overrides the SameSite attribute on auth cookies. Left unset it derives
+  // from COOKIE_SECURE ("none" in production, "lax" locally) — the value
+  // required when the browser talks to the backend's domain directly. Once the
+  // frontend proxies /v1 through its own origin (frontend/vercel.json), the
+  // cookies are first-party and this should be set to "lax", which actually
+  // defends against CSRF instead of opting out of it.
+  COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).optional(),
+  // Number of reverse proxies in front of the app, used to resolve the real
+  // client IP from X-Forwarded-For. Render's own load balancer is 1 hop. Once
+  // the frontend proxies /v1 through Vercel there are 2, and leaving this at 1
+  // makes every request resolve to Vercel's egress IP — collapsing all users
+  // into a single rate-limit bucket and handing out spurious 429s.
+  TRUST_PROXY_HOPS: z.coerce.number().int().positive().default(1),
+
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
   FRONTEND_URL: z.string().default("http://localhost:5173"),
 

@@ -9,6 +9,15 @@
   command = "npm run build"
   publish = "dist"           # relative to base → frontend/dist
 
+# Proxy the API through this origin so auth cookies stay first-party (Safari
+# blocks third-party cookies, which signs users out). Must come BEFORE the SPA
+# fallback — Netlify applies the first matching rule.
+[[redirects]]
+  from = "/v1/*"
+  to = "https://prodpilot-backend.onrender.com/v1/:splat"
+  status = 200
+  force = true
+
 # SPA fallback: serve index.html for any path that isn't a real file, so a
 # refresh on /dashboard/pm is handled by React Router instead of 404ing.
 [[redirects]]
