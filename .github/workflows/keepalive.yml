@@ -1,0 +1,31 @@
+# Render's free tier spins a service down after ~15 minutes without traffic, and
+# the cold start back up measured ~32s. That is slow enough to look broken on
+# first load, and now that the frontend proxies /v1 through Vercel it can also
+# exceed the proxy's gateway timeout and surface as a failed request rather than
+# just a slow one. Pinging every 10 minutes keeps the instance warm.
+#
+# Always-on costs ~730 of the 750 free instance-hours/month, which fits a single
+# service but leaves little room for a second one. Deleting this workflow (or
+# moving the service to a paid instance) are the two ways out.
+name: Keep backend warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+# Never let overlapping runs pile up if a ping is slow.
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    name: Ping /health
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake the Render service
+        run: |
+          curl -fsS --max-time 90 --retry 3 --retry-delay 15 --retry-all-errors \
+            https://prodpilot-backend.onrender.com/health
