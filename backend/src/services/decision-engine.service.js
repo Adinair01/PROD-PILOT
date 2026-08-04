@@ -101,7 +101,10 @@ ${additionalContext ? `ADDITIONAL CONTEXT FROM PM:\n${additionalContext}\n\n` : 
     // Caller (controller) treats a falsy return as "AI unavailable" and
     // responds with a clean 502 — matches the same fail-soft convention as
     // ai.service.js's generateStructuredInsights.
-    logger.warn({ err: err.message }, "[AI] Decision engine Mistral call failed, no insight generated");
+    logger.warn(
+      { err: err.message },
+      "[AI] Decision engine Mistral call failed, no insight generated"
+    );
     return null;
   }
 };
