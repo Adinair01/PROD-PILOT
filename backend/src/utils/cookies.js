@@ -11,10 +11,12 @@ const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 const baseCookieOptions = {
   httpOnly: true,
   secure: env.COOKIE_SECURE,
-  // "none" is only needed while the browser calls the backend cross-site; it
-  // makes the cookie third-party, which Safari blocks outright. Serving the API
-  // same-origin via the frontend's proxy allows COOKIE_SAMESITE=lax instead.
-  sameSite: env.COOKIE_SAMESITE ?? (env.COOKIE_SECURE ? "none" : "lax"),
+  // Default to "lax" — the API is served same-origin through the frontend's
+  // proxy (vercel.json / netlify.toml / vite.config.js), so cookies are always
+  // first-party. "none" makes cookies third-party, which Safari blocks and
+  // Chrome is phasing out — causing silent sign-outs. Only override to "none"
+  // if COOKIE_SAMESITE is explicitly set (e.g. for a truly cross-origin setup).
+  sameSite: env.COOKIE_SAMESITE ?? "lax",
 };
 
 const accessCookieOptions = {

@@ -47,6 +47,10 @@ function refreshSession() {
  * silent refresh and retry the original request once. If the refresh call
  * itself fails (refresh token also expired/revoked), or the retry still
  * comes back 401, clear the cached session and bounce to sign-in.
+ *
+ * Network errors during refresh (server down, DNS blip) do NOT clear the
+ * session — only a concrete 401 from the refresh endpoint does. This
+ * prevents a transient blip from nuking a perfectly valid session.
  */
 api.interceptors.response.use(
   (response) => response,
@@ -61,8 +65,15 @@ api.interceptors.response.use(
         try {
           await refreshSession();
           return api(config);
-        } catch {
-          clearSessionAndRedirect();
+        } catch (refreshErr) {
+          // Only clear the session if the refresh endpoint itself returned 401
+          // (meaning the refresh token is genuinely expired/revoked). Network
+          // errors (timeout, DNS, server down) leave the session intact so a
+          // transient blip doesn't force a re-login.
+          const refreshStatus = refreshErr?.response?.status;
+          if (refreshStatus === 401) {
+            clearSessionAndRedirect();
+          }
           return Promise.reject(error);
         }
       }
