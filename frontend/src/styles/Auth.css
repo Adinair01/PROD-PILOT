@@ -154,8 +154,111 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ─── Step Progress ─── */
+.auth-progress {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2.25rem;
+}
+
+.auth-progress-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.auth-progress-step:last-child {
+  flex: 0 0 auto;
+}
+
+.auth-progress-dot {
+  min-width: 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748B;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.auth-progress-dot--active {
+  color: #fff;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  border-color: transparent;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
+.auth-progress-dot--done {
+  color: #fff;
+  background: rgba(99, 102, 241, 0.5);
+  border-color: transparent;
+}
+
+.auth-progress-label {
+  margin-left: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.auth-progress-label--active {
+  color: #CBD5E1;
+}
+
+.auth-progress-line {
+  flex: 1;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 0.85rem;
+  transition: background 0.4s ease;
+}
+
+.auth-progress-line--done {
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
+}
+
+/* ─── Back button (step 2) ─── */
+.auth-step-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  color: #64748B;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1.25rem;
+  transition: color 0.2s ease;
+}
+
+.auth-step-back:hover {
+  color: #A78BFA;
+}
+
+.auth-step-back:focus-visible {
+  outline: 2px solid #818CF8;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 .auth-header {
   margin-bottom: 2.5rem;
+}
+
+.auth-subtitle-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 0.4rem;
+  color: #818CF8;
 }
 
 .auth-title {
@@ -264,6 +367,69 @@
   box-shadow: none;
 }
 
+/* ─── Password Strength Meter ─── */
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.15rem;
+}
+
+.password-strength-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.password-strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.password-strength-fill--1 { background: #F87171; }
+.password-strength-fill--2 { background: #FB923C; }
+.password-strength-fill--3 { background: #FBBF24; }
+.password-strength-fill--4 { background: #A3E635; }
+.password-strength-fill--5 { background: #34D399; }
+
+.password-strength-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 58px;
+  text-align: right;
+}
+
+.password-strength-label--1 { color: #F87171; }
+.password-strength-label--2 { color: #FB923C; }
+.password-strength-label--3 { color: #FBBF24; }
+.password-strength-label--4 { color: #A3E635; }
+.password-strength-label--5 { color: #34D399; }
+
+/* ─── Trust Strip ─── */
+.trust-strip {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.trust-item svg {
+  color: #34D399;
+}
+
 /* ─── Status banners (errors, confirmations) ─── */
 .auth-banner {
   padding: 0.75rem 1rem;
@@ -291,13 +457,34 @@
    just gives it the same centered placement and hover-lift feel as .auth-btn
    so it reads as part of the form rather than a bolted-on widget. */
 .google-btn-wrapper {
+  position: relative;
   display: flex;
   justify-content: center;
-  transition: transform 0.2s ease;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 3px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #6366F1, #8B5CF6 45%, #F472B6);
+  background-size: 200% 200%;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+  animation: googleBorderShift 6s ease infinite;
+}
+
+.google-btn-wrapper > div {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+@keyframes googleBorderShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
 }
 
 .google-btn-wrapper:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 10px 32px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(244, 114, 182, 0.3);
 }
 
 /* ─── Divider ─── */
@@ -388,4 +575,33 @@
 
 @media (max-width: 1024px) {
   .mobile-brand { display: block; }
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .auth-branding::before,
+  .auth-branding::after {
+    animation: none;
+  }
+  .auth-card {
+    animation: none;
+  }
+  .auth-btn::before {
+    transition: none;
+    display: none;
+  }
+  .auth-btn:hover,
+  .google-btn-wrapper:hover {
+    transform: none;
+  }
+  .google-btn-wrapper {
+    animation: none;
+  }
+  .form-input,
+  .auth-btn,
+  .auth-progress-dot,
+  .auth-progress-line,
+  .password-strength-fill {
+    transition: none;
+  }
 }

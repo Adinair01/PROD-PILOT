@@ -58,7 +58,7 @@ const getHistory = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(50)
     .select(
-      "_id problemSummary decision.decisionTitle decision.priorityLevel decision.impact createdAt"
+      "_id problemSummary decision.decisionTitle decision.confidence decision.priorityLevel decision.impact createdAt"
     )
     .lean();
 

@@ -8,12 +8,20 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
+function Root() {
+  const inner = <App />
+  if (!googleClientId) return inner
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      {inner}
+    </GoogleOAuthProvider>
+  )
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <GoogleOAuthProvider clientId={googleClientId}>
-        <App />
-      </GoogleOAuthProvider>
+      <Root />
     </ErrorBoundary>
   </StrictMode>,
 )

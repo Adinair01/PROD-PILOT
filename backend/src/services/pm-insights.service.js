@@ -278,15 +278,24 @@ const buildFallbackInsights = (
 };
 
 // ─── Insight Cache (per org) ─────────────────────────────────────────────────
-// Keyed by orgId. Stores { result, feedbackCount } so we only regenerate
-// when the total feedback count changes (i.e. new feedback was submitted).
-
+// Keyed by orgId. Stores { result, feedbackCount, timestamp } so we only
+// regenerate when the total feedback count changes (i.e. new feedback was
+// submitted) AND the entry hasn't exceeded its TTL.
+const INSIGHT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const INSIGHT_CACHE_MAX_SIZE = 100; // cap entries to prevent unbounded memory growth
 const insightCache = new Map();
+
+/** Evict the oldest entry when the cache exceeds its size cap. */
+function evictOldestIfNeeded() {
+  if (insightCache.size <= INSIGHT_CACHE_MAX_SIZE) return;
+  const oldestKey = insightCache.keys().next().value;
+  insightCache.delete(oldestKey);
+}
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
 const generatePMInsights = async (orgId) => {
-  const [sentimentStats, roleBreakdown, timelineStats, roleSamples, allNegFeedback] =
+  const [sentimentStats, roleBreakdown, timelineStats, roleSamples, allFeedback] =
     await Promise.all([
       getSentimentStats(orgId),
       getRoleBreakdown(orgId),
@@ -298,10 +307,15 @@ const generatePMInsights = async (orgId) => {
         .lean(),
     ]);
 
-  // ── Cache check: return cached result if feedback count hasn't changed ──
+  // ── Cache check: return cached result if feedback count hasn't changed and
+  // the entry is still within its TTL ──
   const currentCount = sentimentStats.total;
   const cached = insightCache.get(orgId);
-  if (cached && cached.feedbackCount === currentCount) {
+  if (
+    cached &&
+    cached.feedbackCount === currentCount &&
+    Date.now() - cached.timestamp < INSIGHT_CACHE_TTL_MS
+  ) {
     return cached.result;
   }
 
@@ -320,10 +334,10 @@ const generatePMInsights = async (orgId) => {
         : "Stable";
 
   // Cluster all feedback
-  const clusters = clusterFeedback(allNegFeedback);
+  const clusters = clusterFeedback(allFeedback);
 
   // Derive affected teams from actual feedback — engineering roles only, no PM/ADMIN
-  const affectedTeams = getAffectedTeams(allNegFeedback);
+  const affectedTeams = getAffectedTeams(allFeedback);
 
   // Build top issues from clusters (for backward compat)
   const topIssues = clusters.slice(0, 5).map((c) => ({
@@ -347,7 +361,7 @@ const generatePMInsights = async (orgId) => {
 
   const { technicalSummary, businessSummary, actionBlock } = aiInsights
     ? aiInsights
-    : buildFallbackInsights(sentimentStats, roleBreakdown, clusters, roleSamples, allNegFeedback);
+    : buildFallbackInsights(sentimentStats, roleBreakdown, clusters, roleSamples, allFeedback);
 
   const result = {
     healthScore,
@@ -369,8 +383,9 @@ const generatePMInsights = async (orgId) => {
     topIssues,
   };
 
-  // Store in cache keyed by orgId + current feedback count
-  insightCache.set(orgId, { feedbackCount: currentCount, result });
+  // Store in cache keyed by orgId + current feedback count + timestamp
+  evictOldestIfNeeded();
+  insightCache.set(orgId, { feedbackCount: currentCount, result, timestamp: Date.now() });
 
   return result;
 };

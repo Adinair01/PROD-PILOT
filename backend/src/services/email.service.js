@@ -5,15 +5,19 @@ const { logger } = require("../utils/logger");
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const EMAIL_TIMEOUT_MS = 8000;
 
-// Resend's SDK doesn't expose a timeout/abort option — this only stops
-// *waiting* on the call, it doesn't cancel the underlying HTTP request.
+/**
+ * Races the given promise against a timeout. If the timeout wins, the
+ * original promise is still in flight but we suppress its eventual
+ * settlement so it can't cause unhandled-rejection errors or leak memory
+ * via listeners on the rejected side.
+ */
 function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`Email send timed out after ${ms}ms`)), ms)
-    ),
-  ]);
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Email send timed out after ${ms}ms`)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 function escapeHtml(str) {
@@ -46,15 +50,14 @@ async function sendPasswordResetEmail({ to, accounts }) {
     // errors come back as `{ data: null, error }` instead of a rejection. Both
     // paths must be handled; catching only rejections would silently swallow
     // this (e.g. an unverified `from` domain).
-    const { error } = await withTimeout(
-      resend.emails.send({
-        from: env.EMAIL_FROM,
-        to,
-        subject: "Reset your PROD PILOT password",
-        html: renderPasswordResetHtml(accounts),
-      }),
-      EMAIL_TIMEOUT_MS
-    );
+    const sendPromise = resend.emails.send({
+      from: env.EMAIL_FROM,
+      to,
+      subject: "Reset your PROD PILOT password",
+      html: renderPasswordResetHtml(accounts),
+    });
+
+    const { error } = await withTimeout(sendPromise, EMAIL_TIMEOUT_MS);
     if (error) {
       logger.warn({ err: error }, "[Email] Resend rejected the password reset email");
     }

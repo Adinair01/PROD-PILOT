@@ -2,14 +2,32 @@ import { useState } from "react";
 import { api } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { Zap, ShieldCheck, Lightbulb } from "lucide-react";
+import { Zap, ShieldCheck, Lightbulb, Building2, ArrowLeft, Check } from "lucide-react";
 import { storeSession } from "../utils/auth";
 import "../styles/Auth.css";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
+const STEPS = [
+  { label: "Workspace" },
+  { label: "Account" },
+];
+
+function passwordStrength(password) {
+  if (!password) return { score: 0, label: "" };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  const levels = ["Weak", "Fair", "Good", "Strong", "Excellent"];
+  return { score: Math.min(score, 5), label: levels[Math.min(score, 5) - 1] || "Weak" };
+}
+
 export default function Signup() {
   const navigate = useNavigate();
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,6 +39,18 @@ export default function Signup() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const canContinue = formData.orgName.trim().length >= 2 && formData.name.trim().length >= 2;
+
+  const goToAccountStep = (e) => {
+    e.preventDefault();
+    setError("");
+    if (!canContinue) {
+      setError("Enter your organization and full name to continue.");
+      return;
+    }
+    setStep(1);
   };
 
   const handleSignup = async (e) => {
@@ -41,10 +71,6 @@ export default function Signup() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     setError("");
-    if (formData.orgName.trim().length < 2) {
-      setError("Enter an organization name above, then continue with Google.");
-      return;
-    }
     try {
       const response = await api.post("/auth/google/signup", {
         idToken: credentialResponse.credential,
@@ -56,6 +82,8 @@ export default function Signup() {
       setError(err.response?.data?.error || "Google sign-up failed. Please try again.");
     }
   };
+
+  const strength = passwordStrength(formData.password);
 
   return (
     <div className="auth-container">
@@ -106,101 +134,181 @@ export default function Signup() {
             <p className="mobile-brand-tagline">Start Your Journey</p>
           </div>
 
-          <div className="auth-header">
-            <h2 className="auth-title">Create Organization</h2>
-            <p className="auth-subtitle">Set up your workspace and start collecting insights</p>
-          </div>
-
-          <form onSubmit={handleSignup} className="auth-form">
-            {error && (
-              <div className="auth-banner auth-banner--error" role="alert">
-                {error}
+          {/* Step progress */}
+          <div className="auth-progress" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={STEPS.length}>
+            {STEPS.map((s, i) => (
+              <div className="auth-progress-step" key={s.label}>
+                <div
+                  className={
+                    "auth-progress-dot" +
+                    (i < step ? " auth-progress-dot--done" : "") +
+                    (i === step ? " auth-progress-dot--active" : "")
+                  }
+                >
+                  {i < step ? <Check size={13} strokeWidth={3} /> : i + 1}
+                </div>
+                <span className={"auth-progress-label" + (i === step ? " auth-progress-label--active" : "")}>
+                  {s.label}
+                </span>
+                {i < STEPS.length - 1 && (
+                  <div className={"auth-progress-line" + (i < step ? " auth-progress-line--done" : "")} />
+                )}
               </div>
-            )}
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="signup-name">Full Name</label>
-              <input
-                id="signup-name"
-                name="name"
-                className="form-input"
-                placeholder="Jane Smith"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="signup-email">Work Email</label>
-              <input
-                id="signup-email"
-                name="email"
-                type="email"
-                className="form-input"
-                placeholder="you@company.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="signup-password">Password</label>
-              <input
-                id="signup-password"
-                name="password"
-                type="password"
-                className="form-input"
-                placeholder="Create a strong password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength={8}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="signup-org">Organization Name</label>
-              <input
-                id="signup-org"
-                name="orgName"
-                className="form-input"
-                placeholder="Acme Inc."
-                value={formData.orgName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <button type="submit" className="auth-btn" disabled={loading}>
-              {loading ? "Creating..." : "Create Organization"}
-            </button>
-          </form>
-
-          <div className="auth-divider">
-            <div className="divider-line"></div>
-            <span className="divider-text">or</span>
-            <div className="divider-line"></div>
+            ))}
           </div>
 
-          {googleClientId && (
-            <div className="google-btn-wrapper">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError("Google sign-up failed. Please try again.")}
-                theme="filled_black"
-                shape="rectangular"
-                size="large"
-                text="continue_with"
-                width="380"
-              />
-            </div>
+          {step === 0 ? (
+            <>
+              <div className="auth-header">
+                <h2 className="auth-title">Create Your Workspace</h2>
+                <p className="auth-subtitle">Tell us who you are and what you're building.</p>
+              </div>
+
+              <form onSubmit={goToAccountStep} className="auth-form">
+                {error && (
+                  <div className="auth-banner auth-banner--error" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="signup-org">Organization Name</label>
+                  <input
+                    id="signup-org"
+                    name="orgName"
+                    className="form-input"
+                    placeholder="Acme Inc."
+                    value={formData.orgName}
+                    onChange={handleChange}
+                    autoFocus
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="signup-name">Full Name</label>
+                  <input
+                    id="signup-name"
+                    name="name"
+                    className="form-input"
+                    placeholder="Jane Smith"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="auth-btn" disabled={!canContinue}>
+                  Continue
+                </button>
+              </form>
+
+              <div className="auth-link">
+                Already have an account? <a href="/signin">Sign in</a>
+              </div>
+            </>
+          ) : (
+            <>
+              <button type="button" className="auth-step-back" onClick={() => setStep(0)}>
+                <ArrowLeft size={15} strokeWidth={2.5} />
+                Back
+              </button>
+
+              <div className="auth-header">
+                <h2 className="auth-title">Secure Your Account</h2>
+                <p className="auth-subtitle">
+                  <Building2 size={14} strokeWidth={2.5} className="auth-subtitle-icon" />
+                  {formData.orgName}
+                </p>
+              </div>
+
+              <form onSubmit={handleSignup} className="auth-form">
+                {error && (
+                  <div className="auth-banner auth-banner--error" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="signup-email">Work Email</label>
+                  <input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    className="form-input"
+                    placeholder="you@company.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    autoFocus
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="signup-password">Password</label>
+                  <input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    className="form-input"
+                    placeholder="Create a strong password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    minLength={8}
+                  />
+                  {formData.password && (
+                    <div className="password-strength">
+                      <div className="password-strength-track">
+                        <div
+                          className={`password-strength-fill password-strength-fill--${strength.score}`}
+                          style={{ width: `${(strength.score / 5) * 100}%` }}
+                        />
+                      </div>
+                      <span className={`password-strength-label password-strength-label--${strength.score}`}>
+                        {strength.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" className="auth-btn" disabled={loading}>
+                  {loading ? "Creating..." : "Create Organization"}
+                </button>
+              </form>
+
+              <div className="auth-divider">
+                <div className="divider-line"></div>
+                <span className="divider-text">or</span>
+                <div className="divider-line"></div>
+              </div>
+
+              {googleClientId && (
+                <div className="google-btn-wrapper">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError("Google sign-up failed. Please try again.")}
+                    theme="filled_black"
+                    shape="rectangular"
+                    size="large"
+                    text="continue_with"
+                    width="380"
+                  />
+                </div>
+              )}
+
+              <div className="trust-strip">
+                <span className="trust-item">
+                  <ShieldCheck size={14} strokeWidth={2.5} />
+                  Org-isolated data
+                </span>
+                <span className="trust-item">
+                  <Check size={14} strokeWidth={2.5} />
+                  No credit card required
+                </span>
+              </div>
+            </>
           )}
-
-          <div className="auth-link">
-            Already have an account? <a href="/signin">Sign in</a>
-          </div>
         </div>
       </div>
     </div>

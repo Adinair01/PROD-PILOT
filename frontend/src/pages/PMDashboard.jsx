@@ -218,10 +218,12 @@ export default function PMDashboard() {
     return { sentimentData: sentiment, roleData: role };
   }, [data]);
 
+  // Health score ranges from -100 (all negative) to +100 (all positive).
+  // Thresholds: > 20 = good, >= -20 = medium, < -20 = bad.
   const healthClass = useMemo(() => {
     if (!data) return "";
-    if (data.healthScore > 70) return "health-good";
-    if (data.healthScore >= 40) return "health-medium";
+    if (data.healthScore > 20) return "health-good";
+    if (data.healthScore >= -20) return "health-medium";
     return "health-bad";
   }, [data]);
 
@@ -274,7 +276,7 @@ export default function PMDashboard() {
         <div className="metrics-grid">
           <div className={`metric-card ${healthClass}`}>
             <div className="metric-icon">
-              {data.healthScore > 70 ? <TrendingUp size={22} /> : data.healthScore >= 40 ? <Minus size={22} /> : <TrendingDown size={22} />}
+              {data.healthScore > 20 ? <TrendingUp size={22} /> : data.healthScore >= -20 ? <Minus size={22} /> : <TrendingDown size={22} />}
             </div>
             <div className="metric-label">Health Score</div>
             <div className="metric-value">{data.healthScore}</div>

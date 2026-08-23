@@ -4,6 +4,7 @@ import {
   TrendingUp, ShieldCheck, Clock, Target, ArrowRight,
   ChevronRight, Mail, Linkedin, AlertTriangle, Filter,
   Activity, Database, GitMerge, CheckCircle, Cpu,
+  Kanban, Milestone, Compass, LineChart, Route,
 } from "lucide-react";
 import "../styles/Landing.css";
 
@@ -40,6 +41,7 @@ function Hero() {
 
   return (
     <section className="lp-hero">
+      <div className="lp-hero-aurora" />
       <div className="lp-hero-bg" />
       <div className="lp-hero-grid-overlay" />
       <div className="lp-container">
@@ -128,6 +130,73 @@ function Hero() {
             <div key={s.label} className="lp-stat">
               <div className="lp-stat-val">{s.val}</div>
               <div className="lp-stat-label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Roles — speaks the language of every product role ─────────────────── */
+function Roles() {
+  const roles = [
+    {
+      Icon: Compass,
+      title: "Product Manager",
+      hook: "Own the roadmap with confidence",
+      accent: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+      terms: ["Roadmap alignment", "OKR tracking", "Stakeholder sync"],
+    },
+    {
+      Icon: Kanban,
+      title: "Product Owner",
+      hook: "Keep the backlog honest",
+      accent: "linear-gradient(135deg,#8B5CF6,#EC4899)",
+      terms: ["Backlog health", "Sprint velocity", "Release readiness"],
+    },
+    {
+      Icon: LineChart,
+      title: "Product Analyst",
+      hook: "Turn raw signal into insight",
+      accent: "linear-gradient(135deg,#F59E0B,#EF4444)",
+      terms: ["Sentiment trends", "Cohort breakdown", "Health scoring"],
+    },
+    {
+      Icon: Route,
+      title: "Engineering Lead",
+      hook: "See what's actually blocking ship",
+      accent: "linear-gradient(135deg,#22C55E,#6366F1)",
+      terms: ["Cycle time", "Issue severity", "Cross-team load"],
+    },
+  ];
+
+  return (
+    <section className="lp-section" id="roles">
+      <div className="lp-container">
+        <div className="lp-section-hd">
+          <div className="lp-section-label">Built For Your Role</div>
+          <h2 className="lp-section-h2">Speaks your team's language</h2>
+          <p className="lp-section-sub">
+            Not generic AI output — terms and workflows product people actually use every day.
+          </p>
+        </div>
+        <div className="lp-roles-grid">
+          {roles.map(({ Icon, title, hook, accent, terms }) => (
+            <div key={title} className="lp-role-card" style={{ "--role-accent": accent }}>
+              <div className="lp-role-card-inner">
+                <div className="lp-role-face lp-role-face--front">
+                  <div className="lp-role-icon"><Icon size={22} /></div>
+                  <h3>{title}</h3>
+                  <p>{hook}</p>
+                </div>
+                <div className="lp-role-face lp-role-face--back">
+                  <Milestone size={16} className="lp-role-back-icon" />
+                  <ul>
+                    {terms.map((t) => <li key={t}>{t}</li>)}
+                  </ul>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -440,6 +509,8 @@ export default function Landing() {
     <>
       <Navbar />
       <Hero />
+      <div className="lp-divider" />
+      <Roles />
       <div className="lp-divider" />
       <Problem />
       <div className="lp-divider" />

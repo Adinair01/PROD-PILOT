@@ -16,19 +16,20 @@ const getSentimentStats = async (orgId) => {
     },
   ]);
 
-  const total = stats.reduce((sum, s) => sum + s.count, 0);
-
+  // Compute total from the three known buckets only — feedback with a null
+  // sentiment is excluded so percentages stay accurate.
   const result = {
-    total,
     POSITIVE: 0,
     NEGATIVE: 0,
     NEUTRAL: 0,
+    total: 0,
   };
 
   stats.forEach((s) => {
-    if (s._id) result[s._id] = s.count;
+    if (s._id && s._id in result) result[s._id] = s.count;
   });
 
+  result.total = result.POSITIVE + result.NEGATIVE + result.NEUTRAL;
   return result;
 };
 
@@ -44,6 +45,10 @@ const getRoleBreakdown = async (orgId) => {
   ]);
 };
 
+/**
+ * Scores feedback by negative sentiment + recency. Old feedback decays so
+ * the "priority" list stays current instead of being dominated by stale entries.
+ */
 const calculatePriorityScore = (feedback) => {
   let base = 0;
 
@@ -55,33 +60,87 @@ const calculatePriorityScore = (feedback) => {
 
   const recencyBoost = ageInHours < 24 ? 2 : 0;
 
-  return base + recencyBoost;
+  // Decay: halve the score for feedback older than 7 days
+  const ageDecay = ageInHours > 168 ? 0.5 : 1;
+
+  return (base + recencyBoost) * ageDecay;
 };
 
+/** Max feedback docs to load for priority scoring and clustering. */
+const QUERY_LIMIT = 200;
+
 const getPriorityFeedback = async (orgId) => {
-  const feedbacks = await Feedback.find({ organizationId: orgId });
+  const feedbacks = await Feedback.find({ organizationId: orgId })
+    .sort({ createdAt: -1 })
+    .limit(QUERY_LIMIT)
+    .lean();
 
   return feedbacks
     .map((f) => ({
-      ...f.toObject(),
+      ...f,
       priorityScore: calculatePriorityScore(f),
     }))
     .sort((a, b) => b.priorityScore - a.priorityScore);
 };
 
+// ─── Keyword-based clustering (replaces the naive first-word approach) ───────
+
+const CLUSTER_PATTERNS = [
+  {
+    label: "API Failure",
+    terms: ["api", "endpoint", "route", "request", "response", "500", "404"],
+  },
+  {
+    label: "Database Issue",
+    terms: ["database", "db", "mongo", "query", "write", "read", "storage", "persist"],
+  },
+  {
+    label: "Performance",
+    terms: ["slow", "lag", "latency", "performance", "timeout", "freeze", "loading"],
+  },
+  {
+    label: "UI / UX Bug",
+    terms: ["ui", "button", "screen", "layout", "mobile", "responsive", "css", "render", "component"],
+  },
+  {
+    label: "Data Pipeline",
+    terms: ["etl", "pipeline", "aggregation", "data", "analytics", "inconsistent", "report"],
+  },
+  {
+    label: "Authentication",
+    terms: ["login", "auth", "token", "session", "logout", "permission", "access"],
+  },
+  {
+    label: "Test Failures",
+    terms: ["test", "regression", "coverage", "bug", "fail", "broken", "flaky"],
+  },
+  {
+    label: "Server Error",
+    terms: ["crash", "exception", "error", "server", "500", "exception", "stack"],
+  },
+];
+
 const getClusters = async (orgId) => {
-  const feedbacks = await Feedback.find({ organizationId: orgId });
+  const feedbacks = await Feedback.find({ organizationId: orgId })
+    .sort({ createdAt: -1 })
+    .limit(QUERY_LIMIT)
+    .lean();
 
   const clusters = {};
 
   feedbacks.forEach((f) => {
-    const keyword = f.message.split(" ")[0].toLowerCase();
-
-    if (!clusters[keyword]) {
-      clusters[keyword] = [];
-    }
-
-    clusters[keyword].push(f);
+    const lower = f.message.toLowerCase();
+    CLUSTER_PATTERNS.forEach((p) => {
+      if (p.terms.some((t) => lower.includes(t))) {
+        if (!clusters[p.label]) {
+          clusters[p.label] = { issue: p.label, messages: [], count: 0 };
+        }
+        clusters[p.label].count++;
+        if (clusters[p.label].messages.length < 3) {
+          clusters[p.label].messages.push(f.message);
+        }
+      }
+    });
   });
 
   return clusters;

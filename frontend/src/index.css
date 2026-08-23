@@ -95,3 +95,14 @@ textarea:focus-visible,
   background: rgba(99, 102, 241, 0.3);
   color: var(--text-body);
 }
+
+/* App-wide reduced-motion safety net — individual stylesheets may add their
+   own more targeted overrides, but this catches anything they don't. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

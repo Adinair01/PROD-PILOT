@@ -232,13 +232,14 @@ body {
   padding: 2rem;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.25s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .metric-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 32px -12px rgba(99, 102, 241, 0.5);
+  border-color: var(--border-hi);
 }
 
 .metric-icon {
