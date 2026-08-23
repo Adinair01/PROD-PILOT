@@ -13,6 +13,7 @@ import FEDashboard from "./pages/FEDashboard";
 import BEDashboard from "./pages/BEDashboard";
 import DataDashboard from "./pages/DataDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -34,6 +35,9 @@ function App() {
         <Route path="/dashboard/fe" element={<ProtectedRoute><FEDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/be" element={<ProtectedRoute><BEDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/data" element={<ProtectedRoute><DataDashboard /></ProtectedRoute>} />
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
