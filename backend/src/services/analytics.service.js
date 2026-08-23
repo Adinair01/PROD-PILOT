@@ -100,7 +100,17 @@ const CLUSTER_PATTERNS = [
   },
   {
     label: "UI / UX Bug",
-    terms: ["ui", "button", "screen", "layout", "mobile", "responsive", "css", "render", "component"],
+    terms: [
+      "ui",
+      "button",
+      "screen",
+      "layout",
+      "mobile",
+      "responsive",
+      "css",
+      "render",
+      "component",
+    ],
   },
   {
     label: "Data Pipeline",
